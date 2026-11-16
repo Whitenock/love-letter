@@ -1,0 +1,7 @@
+/* Контейнер для будущих эффектов. Пока пустой и «прозрачный» для указателя. */
+.animation-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}

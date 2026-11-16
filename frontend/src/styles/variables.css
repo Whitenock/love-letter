@@ -1,0 +1,28 @@
+/* Дизайн-токены проекта. Все цвета, радиусы и тени — только через эти переменные. */
+:root {
+  color-scheme: light;
+
+  --color-bg: #faf6f1;
+  --color-surface: #ffffff;
+  --color-text: #3d2c2e;
+  --color-muted: #9a8a8c;
+
+  --color-accent: #e0526d;
+  --color-accent-dark: #c7435f;
+
+  --color-envelope: #f3ddc4;
+  --color-envelope-dark: #e7c9a9;
+  --color-letter: #fffdf7;
+
+  --radius-lg: 20px;
+  --radius-md: 14px;
+
+  --shadow-soft: 0 12px 32px rgba(61, 44, 46, 0.14);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-serif: Georgia, 'Times New Roman', serif;
+
+  /* Высота viewport Telegram; обновляется из setupViewportTracking.
+     В браузере остаётся 100vh (с динамическим fallback в body). */
+  --app-viewport-height: 100vh;
+}

@@ -1,0 +1,50 @@
+.screen {
+  min-height: var(--app-viewport-height);
+  display: flex;
+  flex-direction: column;
+  padding: calc(env(safe-area-inset-top, 0px) + 20px) 20px
+    calc(env(safe-area-inset-bottom, 0px) + 16px);
+}
+
+.screen__header {
+  text-align: center;
+}
+
+.screen__greeting {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: var(--color-muted);
+}
+
+.screen__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.screen__stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.screen__footer {
+  text-align: center;
+  min-height: 24px;
+}
+
+.screen__hint {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-muted);
+}
+
+.screen__dev-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--color-muted);
+  opacity: 0.8;
+}

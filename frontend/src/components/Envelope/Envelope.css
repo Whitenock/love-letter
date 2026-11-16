@@ -1,0 +1,34 @@
+.envelope {
+  position: relative;
+  width: min(320px, 80vw);
+  aspect-ratio: 4 / 3;
+}
+
+/* Тело конверта — временная заглушка; финальная графика появится позже. */
+.envelope__body {
+  position: absolute;
+  inset: 0;
+  background: var(--color-envelope);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Клапан конверта — треугольник через clip-path. */
+.envelope__flap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 52%;
+  background: var(--color-envelope-dark);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+/* Сердце размещается по центру конверта. */
+.heart {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
