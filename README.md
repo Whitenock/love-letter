@@ -1,9 +1,78 @@
 # Telegram Mini App: интерактивное романтическое письмо
 
-Проект-фундамент для Telegram Mini App с интерактивным конвертом и письмом.
-Текущий этап — **техническая база**: бот, инициализация Telegram WebApp API,
+Проект-фундамент для Telegram Mini App **и одновременно PWA** с интерактивным
+конвертом и письмом.
+
+Два способа открыть письмо:
+- **PWA (основной)**: сайт на GitHub Pages — на iPhone открывается в Safari,
+  добавляется на экран «Домой» и запускается как обычное приложение.
+- **Telegram Mini App (бонус)**: через бота, когда сеть позволяет подключиться
+  к Telegram API (см. раздел про VPN ниже).
+
+Текущий этап — **техническая база**: инициализация Telegram WebApp API,
 машина состояний и заглушки интерфейса. Анимации, музыка и финальный дизайн
 будут добавлены на следующих этапах.
+
+## Быстрый старт: публикация на GitHub Pages (PWA)
+
+Так письмо открывается на iPhone как приложение — без App Store и без VPN:
+
+1. **Создайте аккаунт на github.com** (если его нет) — 2 минуты.
+2. **Создайте Personal Access Token**:
+   github.com → Settings → Developer settings → Personal access tokens →
+   **Fine-grained tokens** → Generate new token:
+   - Repository access: *All repositories* (или создайте репозиторий заранее и выберите его);
+   - Permissions: **Contents: Read and write**, **Administration: Read and write**
+     (нужно для автоматического создания репозитория и включения Pages);
+   - срок действия — на ваш выбор.
+3. **Заполните в корневом `.env`** три строки (см. `.env.example`):
+
+   ```env
+   GH_USERNAME=ваш_логин
+   GH_TOKEN=github_pat_...
+   GH_REPO_NAME=love-letter
+   ```
+
+4. **Запустите деплой** из корня проекта:
+
+   ```bash
+   npm run deploy:github
+   ```
+
+   Скрипт сам создаст репозиторий (если нет), отправит код в `main`,
+   соберёт frontend и опубликует сборку в ветку `gh-pages`, включит Pages
+   и напечатает адрес сайта вида:
+
+   ```
+   https://<ваш_логин>.github.io/love-letter/
+   ```
+
+5. Через 1–2 минуты сайт откроется. **Установка на iPhone**:
+   - откройте адрес в Safari;
+   - кнопка «Поделиться» → «На экран “Домой”» → «Добавить»;
+   - на рабочем столе появится иконка с сердцем — тап открывает письмо
+     на весь экран, как обычное приложение.
+
+При повторных изменениях достаточно снова выполнить `npm run deploy:github`.
+
+> ⚠️ Репозиторий публичный (GitHub Pages на бесплатном тарифе работает только
+> для public-репозиториев). Пока в коде только текст-заглушка — это безопасно.
+> Когда появится настоящий текст письма, обсудим приватный вариант доставки
+> контента (например, отдача текста из backend по подписанной ссылке), чтобы
+> текст не лежал в открытом репозитории.
+
+## Подключение Telegram (Mini App) — через VPN
+
+Ваша сеть блокирует Telegram API и туннели Cloudflare без VPN. С включённым
+VPN всё работает штатно (проверено). Напоминание по настройке:
+
+1. Токен бота уже в `.env` (`BOT_TOKEN`).
+2. Когда VPN включён, `api.telegram.org` доступен — бот запускается через
+   `npm --prefix backend run dev`.
+3. Для Mini App внутри Telegram нужен публичный HTTPS-адрес (`WEBAPP_URL`).
+   Самый простой вариант — тот же GitHub Pages: впишите адрес сайта
+   (`https://<логин>.github.io/love-letter/`) в `WEBAPP_URL` и привяжите
+   кнопку в @BotFather (см. раздел «Как привязать Mini App к боту»).
 
 ## Структура проекта
 
@@ -77,12 +146,14 @@ telegram-love-letter/
 
 1. **Node.js 20+** — https://nodejs.org (LTS).
 2. **npm** (идёт в комплекте с Node.js).
+3. **git** — для деплоя на GitHub Pages (в Windows достаточно Git for Windows).
 
 Проверка версий:
 
 ```bash
 node -v
 npm -v
+git --version
 ```
 
 ## Установка зависимостей
@@ -207,6 +278,8 @@ curl http://localhost:3000/healthz # healthcheck backend
 | Новые команды бота | `backend/src/handlers/commandHandlers.ts` |
 | Новые HTTP-эндпоинты | `backend/src/server/httpServer.ts` (handleRequest) |
 | Персонализация по start-параметру | `backend` (`ctx.payload` в `/start`) и `frontend` (`environment.startParam`) |
+| Иконки и манифест PWA | `frontend/public/`, генератор — `scripts/make-icons.ps1` |
+| Деплой на GitHub Pages | `npm run deploy:github` (`scripts/deploy-github-pages.mjs`) |
 
 ## Безопасность — кратко
 
