@@ -125,116 +125,180 @@
   }
 }
 
-/* --- Бумажный лист -------------------------------------------------------- */
+/* --- Конверт --------------------------------------------------------------- */
 
-.scene__paper {
+.scene__envelope {
   position: relative;
   transform-style: preserve-3d;
-  width: clamp(230px, 72vw, 330px);
-  aspect-ratio: 3 / 4.1;
+  width: clamp(250px, 76vw, 360px);
+  aspect-ratio: 4 / 2.9;
 }
 
-/* Нижний «торец» стопки страниц — намёк на толщину листа. */
-.scene__paper-edge {
-  position: absolute;
-  left: 3px;
-  right: 3px;
-  bottom: -5px;
-  height: 8px;
-  border-radius: 0 0 12px 12px;
-  background: linear-gradient(#e6d8c2 0%, #d8c6ab 100%);
-  box-shadow: 0 3px 6px rgba(61, 44, 46, 0.12);
-}
-
-/* Второй лист позади — объём и мягкая глубокая тень. */
-.scene__paper-back {
+/* Нижний лист позади — объём и мягкая глубокая тень. */
+.scene__env-back {
   position: absolute;
   inset: 0;
-  transform: translate3d(7px, 12px, -8px);
-  border-radius: 16px;
-  background: linear-gradient(160deg, #ecdfca 0%, #dcc9ae 100%);
+  transform: translate3d(6px, 12px, -8px);
+  border-radius: 14px;
+  background: linear-gradient(160deg, #e3d0ac 0%, #d4bd92 100%);
   box-shadow: 0 24px 48px rgba(61, 44, 46, 0.2);
 }
 
-/* Лицевая сторона: тёплая бумага, освещение сверху-слева, тень по краям. */
-.scene__paper-face {
+/* Торец стопки писем внутри конверта. */
+.scene__env-edge {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: -4px;
+  height: 6px;
+  border-radius: 0 0 10px 10px;
+  background: linear-gradient(#dcc69c 0%, #cdb689 100%);
+}
+
+/* Корпус конверта: тёплая крафт-бумага, освещение сверху-слева. */
+.scene__env-body {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 14px;
+  overflow: hidden;
+  border-radius: 12px;
   background:
     radial-gradient(
-      120% 80% at 22% 8%,
-      rgba(255, 255, 255, 0.85),
+      130% 90% at 20% 6%,
+      rgba(255, 255, 255, 0.55),
       rgba(255, 255, 255, 0) 55%
     ),
     radial-gradient(
-      140% 110% at 85% 100%,
-      rgba(196, 168, 138, 0.3),
-      rgba(196, 168, 138, 0) 60%
+      140% 120% at 88% 105%,
+      rgba(146, 108, 58, 0.22),
+      rgba(146, 108, 58, 0) 60%
     ),
-    linear-gradient(160deg, #fffdf8 0%, #fbf6ec 55%, #f4ebdc 100%);
+    linear-gradient(155deg, #f2e3c6 0%, #ecdbb8 55%, #e3d0a8 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 0 -2px 6px rgba(160, 130, 100, 0.2),
-    inset 2px 0 6px rgba(160, 130, 100, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    inset 0 -2px 6px rgba(122, 90, 46, 0.18),
     0 10px 30px rgba(61, 44, 46, 0.16);
 }
 
 /* Мелкое зерно бумаги — SVG-шум, едва заметный. */
-.scene__paper-grain {
+.scene__env-grain {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 140px 140px;
-  opacity: 0.055;
+  opacity: 0.06;
   mix-blend-mode: multiply;
   pointer-events: none;
 }
 
-/* Статичный мягкий блик на бумаге (периодический sheen — только у сердца). */
-.scene__paper-sheen {
+/* Статичный мягкий блик по диагонали конверта. */
+.scene__env-sheen {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
   background: linear-gradient(
     118deg,
-    rgba(255, 255, 255, 0) 30%,
-    rgba(255, 255, 255, 0.4) 44%,
-    rgba(255, 255, 255, 0) 56%
+    rgba(255, 255, 255, 0) 32%,
+    rgba(255, 255, 255, 0.35) 46%,
+    rgba(255, 255, 255, 0) 58%
   );
-  opacity: 0.35;
+  opacity: 0.4;
   pointer-events: none;
 }
 
-/* Тень от сердца на бумаге. */
-.scene__heart-shadow {
+/*
+ * Клапаны конверта. Каждый — обёртка с drop-shadow (фильтр применяется
+ * к обёртке, поэтому тень повторяет clip-path фигуры и падает на корпус)
+ * плюс сам клапан с clip-path и градиентом.
+ */
+.scene__env-flap-wrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.scene__env-flap {
+  position: absolute;
+  inset: 0;
+}
+
+/* Боковой левый клапан. */
+.scene__env-flap-wrap--left {
+  filter: drop-shadow(-2px 3px 3px rgba(97, 70, 36, 0.25));
+}
+
+.scene__env-flap--left {
+  clip-path: polygon(0 0, 50% 54%, 0 100%);
+  background: linear-gradient(115deg, #ecdaba 0%, #f0e0c2 65%, #eee0be 100%);
+}
+
+/* Боковой правый клапан. */
+.scene__env-flap-wrap--right {
+  filter: drop-shadow(2px 3px 3px rgba(97, 70, 36, 0.25));
+}
+
+.scene__env-flap--right {
+  clip-path: polygon(100% 0, 50% 54%, 100% 100%);
+  background: linear-gradient(245deg, #ecdaba 0%, #f0e0c2 65%, #eee0be 100%);
+}
+
+/* Нижний клапан — поверх боковых. */
+.scene__env-flap-wrap--bottom {
+  filter: drop-shadow(0 4px 4px rgba(97, 70, 36, 0.28));
+}
+
+.scene__env-flap--bottom {
+  clip-path: polygon(0 100%, 50% 54%, 100% 100%);
+  background: linear-gradient(0deg, #e7d2a8 0%, #efdfc0 70%, #f0e2c4 100%);
+}
+
+/* Верхний клапан (закрытый) — поверх всех, отбрасывает тень на корпус. */
+.scene__env-flap-wrap--top {
+  filter: drop-shadow(0 8px 8px rgba(97, 70, 36, 0.3));
+}
+
+.scene__env-flap--top {
+  clip-path: polygon(0 0, 100% 0, 50% 54%);
+  background:
+    linear-gradient(to top, rgba(97, 70, 36, 0.16), rgba(97, 70, 36, 0) 14%),
+    linear-gradient(180deg, #f4e7cc 0%, #ecdabb 72%, #e6d2aa 100%);
+}
+
+/* --- Сердце-печать ---------------------------------------------------------- */
+
+.scene__seal {
   position: absolute;
   left: 50%;
-  top: 63%;
-  width: 44%;
-  height: 12%;
+  top: 54%;
+  width: 38%;
+  max-width: 150px;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  /* Приподнимаем печать над конвертом в 3D. */
+  transform-style: preserve-3d;
+}
+
+/* Тень печати на конверте. */
+.scene__seal-shadow {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: 120%;
+  height: 40%;
   transform: translateX(-50%);
   background: radial-gradient(
     ellipse closest-side,
-    rgba(61, 44, 46, 0.3),
+    rgba(61, 44, 46, 0.32),
     rgba(61, 44, 46, 0) 75%
   );
-  filter: blur(4px);
+  filter: blur(5px);
   pointer-events: none;
 }
-
-/* --- Объёмное сердце ------------------------------------------------------ */
 
 .scene-heart {
   --heart-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E");
   position: relative;
-  width: 54%;
-  max-width: 190px;
-  aspect-ratio: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
   padding: 0;
   border: none;
   background: transparent;
@@ -362,8 +426,8 @@
 /* --- Адаптация -------------------------------------------------------------- */
 
 @media (max-width: 360px) {
-  .scene__paper {
-    width: min(78vw, 260px);
+  .scene__envelope {
+    width: min(82vw, 280px);
   }
 }
 

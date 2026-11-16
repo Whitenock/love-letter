@@ -3,21 +3,52 @@ import './InstallGuide.css';
 
 type GuidePlatform = 'ios' | 'android' | 'desktop';
 
-function detectPlatform(): GuidePlatform {
+interface GuideContext {
+  platform: GuidePlatform;
+  /** Ссылку открыли во внутреннем браузере приложения (например, Telegram). */
+  inApp: boolean;
+}
+
+function detectGuideContext(): GuideContext {
   const ua = navigator.userAgent;
   const isIOS =
     /iPad|iPhone|iPod/.test(ua) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // Заглушка window.Telegram.WebApp создаётся даже во внутреннем
+  // браузере Telegram (см. telegramWebApp.ts) — надёжный признак.
+  const telegramStub =
+    typeof window !== 'undefined' &&
+    Boolean(
+      (window as unknown as { Telegram?: { WebApp?: unknown } }).Telegram?.WebApp,
+    );
+
   if (isIOS) {
-    return 'ios';
+    // У Safari в UA есть токен «Safari/…»; у встроенных браузеров (WKWebView,
+    // Chrome для iOS и т.п.) его нет. Telegram может добавлять свой токен.
+    const isSafari =
+      /Safari\/\d/.test(ua) && !/CriOS|FxiOS|EdgiOS|Telegram/i.test(ua);
+    return { platform: 'ios', inApp: telegramStub || !isSafari };
   }
+
   if (/Android/i.test(ua)) {
-    return 'android';
+    // «; wv)» — признак Android WebView (внутренние браузеры приложений).
+    const isStandaloneChrome = /Chrome\/\d/.test(ua) && !/;\s*wv\)/.test(ua);
+    return { platform: 'android', inApp: telegramStub || !isStandaloneChrome };
   }
-  return 'desktop';
+
+  return { platform: 'desktop', inApp: telegramStub };
 }
 
 /** Иконки шагов — лёгкие инлайн-SVG в стиле системных подсказок. */
+function CompassIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M15.5 8.5l-2.2 5-5 2.2 2.2-5z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 function ShareIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -57,6 +88,16 @@ function MenuIcon() {
   );
 }
 
+function GlobeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18" />
+      <path d="M12 3c2.5 2.6 3.8 5.7 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.7-3.8-9s1.3-6.4 3.8-9z" />
+    </svg>
+  );
+}
+
 function ArrowDownIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -71,6 +112,22 @@ interface GuideStep {
   title: string;
   text: string;
 }
+
+/**
+ * Шаг «перейди в нормальный браузер» — первый, когда ссылку открыли во
+ * внутреннем браузере Telegram или другого приложения.
+ */
+const openInSafariStep: GuideStep = {
+  icon: <CompassIcon />,
+  title: 'Открой ссылку в Safari',
+  text: 'В Telegram: «Поделиться» → «Открыть в Safari»',
+};
+
+const openInChromeStep: GuideStep = {
+  icon: <GlobeIcon />,
+  title: 'Открой ссылку в Chrome',
+  text: 'В Telegram: меню → «Открыть в браузере»',
+};
 
 const iOSSteps: GuideStep[] = [
   {
@@ -121,8 +178,14 @@ const SUBTITLES: Record<GuidePlatform, string> = {
  * приложения (или из Telegram Mini App).
  */
 export function InstallGuide() {
-  const platform = detectPlatform();
-  const steps = platform === 'android' ? androidSteps : iOSSteps;
+  const context = detectGuideContext();
+  const baseSteps = context.platform === 'android' ? androidSteps : iOSSteps;
+  // Если открыли во внутреннем браузере (Telegram и т.п.) — первый шаг:
+  // перейти в Safari / Chrome, иначе инструкция установки не сработает.
+  const steps =
+    context.inApp && context.platform !== 'desktop'
+      ? [context.platform === 'ios' ? openInSafariStep : openInChromeStep, ...baseSteps]
+      : baseSteps;
 
   return (
     <main className="install-guide">
@@ -130,7 +193,7 @@ export function InstallGuide() {
         <header className="install-guide__header">
           <div className="install-guide__badge" aria-hidden="true">💌</div>
           <h1 className="install-guide__title">Письмо для тебя</h1>
-          <p className="install-guide__subtitle">{SUBTITLES[platform]}</p>
+          <p className="install-guide__subtitle">{SUBTITLES[context.platform]}</p>
         </header>
 
         <ol className="install-guide__steps">
@@ -146,7 +209,7 @@ export function InstallGuide() {
           ))}
         </ol>
 
-        {platform === 'ios' ? (
+        {context.platform === 'ios' && !context.inApp ? (
           <p className="install-guide__hint" aria-hidden="true">
             <ArrowDownIcon />
             <span>Кнопка «Поделиться» — внизу Safari</span>

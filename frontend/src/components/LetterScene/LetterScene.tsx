@@ -46,24 +46,40 @@ export function LetterScene({ state, onOpen }: LetterSceneProps) {
 
         <div className="scene__flight" ref={flightRef}>
           <div className="scene__float">
-            <div className="scene__paper" aria-label="Письмо с сердцем">
-              {/* Обратная сторона и торцы — ощущение толщины листа. */}
-              <span className="scene__paper-back" aria-hidden="true" />
-              <span className="scene__paper-edge" aria-hidden="true" />
-              <span className="scene__paper-face">
-                <span className="scene__paper-grain" aria-hidden="true" />
-                <span className="scene__paper-sheen" aria-hidden="true" />
-                <span className="scene__heart-shadow" aria-hidden="true" />
-                <button
-                  type="button"
-                  className="scene-heart"
-                  onClick={handleOpen}
-                  disabled={state !== 'idle'}
-                  aria-label="Открыть письмо"
-                >
-                  <span className="scene-heart__shape" aria-hidden="true" />
-                  <span className="scene-heart__sheen" aria-hidden="true" />
-                </button>
+            <div className="scene__envelope" aria-label="Конверт с письмом">
+              {/* Нижний лист и торец — толщина конверта. */}
+              <span className="scene__env-back" aria-hidden="true" />
+              <span className="scene__env-edge" aria-hidden="true" />
+              <span className="scene__env-body">
+                <span className="scene__env-grain" aria-hidden="true" />
+                <span className="scene__env-sheen" aria-hidden="true" />
+                {/* Клапаны: боковые, нижний, верхний (сверху всех). */}
+                <span className="scene__env-flap-wrap scene__env-flap-wrap--left" aria-hidden="true">
+                  <span className="scene__env-flap scene__env-flap--left" />
+                </span>
+                <span className="scene__env-flap-wrap scene__env-flap-wrap--right" aria-hidden="true">
+                  <span className="scene__env-flap scene__env-flap--right" />
+                </span>
+                <span className="scene__env-flap-wrap scene__env-flap-wrap--bottom" aria-hidden="true">
+                  <span className="scene__env-flap scene__env-flap--bottom" />
+                </span>
+                <span className="scene__env-flap-wrap scene__env-flap-wrap--top" aria-hidden="true">
+                  <span className="scene__env-flap scene__env-flap--top" />
+                </span>
+                {/* Сердце-печать на кончике верхнего клапана. */}
+                <span className="scene__seal">
+                  <span className="scene__seal-shadow" aria-hidden="true" />
+                  <button
+                    type="button"
+                    className="scene-heart"
+                    onClick={handleOpen}
+                    disabled={state !== 'idle'}
+                    aria-label="Открыть письмо"
+                  >
+                    <span className="scene-heart__shape" aria-hidden="true" />
+                    <span className="scene-heart__sheen" aria-hidden="true" />
+                  </button>
+                </span>
               </span>
             </div>
           </div>
