@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getWebApp } from '../telegram/telegramWebApp';
+import { getWebApp, isRealTelegramContext } from '../telegram/telegramWebApp';
 
 export type DisplayMode = 'telegram' | 'standalone' | 'browser';
 
@@ -12,7 +12,7 @@ export type DisplayMode = 'telegram' | 'standalone' | 'browser';
  * - browser    — открыто как обычная ссылка в браузере.
  */
 function detectDisplayMode(): DisplayMode {
-  if (getWebApp()) {
+  if (isRealTelegramContext(getWebApp())) {
     return 'telegram';
   }
   const matchMediaStandalone =

@@ -19,10 +19,23 @@ export function getWebApp(): TelegramWebApp | null {
  * Если API недоступен (обычный браузер), возвращает isTelegram: false —
  * приложение продолжает работать в режиме разработки.
  */
+/**
+ * Настоящий контекст Mini App: скрипт telegram-web-app.js создаёт заглушку
+ * window.Telegram.WebApp и в обычном браузере (platform: 'unknown',
+ * пустой initData) — например, во встроенном браузере Telegram Desktop
+ * при открытии обычной ссылки. Поэтому Telegram определяем по конкретному
+ * значению platform, а не по наличию объекта WebApp.
+ */
+export function isRealTelegramContext(webApp: TelegramWebApp | null): boolean {
+  return (
+    webApp !== null && webApp.platform !== 'unknown' && webApp.platform !== ''
+  );
+}
+
 export function readTelegramEnvironment(): TelegramEnvironment {
   const webApp = getWebApp();
 
-  if (!webApp) {
+  if (webApp === null || !isRealTelegramContext(webApp)) {
     return { isTelegram: false, user: null, startParam: null, platform: 'browser' };
   }
 
