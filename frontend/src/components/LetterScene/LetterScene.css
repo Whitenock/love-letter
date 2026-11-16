@@ -13,10 +13,13 @@
 .scene {
   position: relative;
   width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Растягиваем сцену на весь stage: height:100% у flex-элемента с
+     align-items:center родителя не резолвится, сцена сжимается до
+     высоты конверта, и канвас поля сердечек получает неверный бокс. */
+  align-self: stretch;
   /* Точка схода перспективы чуть выше центра — письмо подлетает «к глазам». */
   perspective: 1100px;
   perspective-origin: 50% 42%;
@@ -96,7 +99,9 @@
   position: absolute;
   z-index: 0;
   left: 50%;
-  bottom: max(9%, calc(50% - 30vh));
+  /* Привязка к низу конверта: конверт центрирован, его высота =
+     min(76vw, 360px) * 2.9/4. Тень чуть заходит под нижнюю кромку. */
+  bottom: calc(50% - min(76vw, 360px) * 0.725 / 2 - 14px);
   width: clamp(160px, 46vw, 300px);
   height: clamp(16px, 4vh, 30px);
   transform: translateX(-50%);
@@ -451,5 +456,539 @@
 
   .heart-trail {
     display: none;
+  }
+}
+
+/* ==========================================================================
+   СЦЕНА 2: удержание сердца, открытие конверта, взрыв сердечек, письмо.
+   Тайминги синхронизированы с appConfig.scene2 — не менять по отдельности:
+     holdDurationMs       — управляет только JS (заряд --charge 0..1);
+     flapOpenMs (750ms)   — keyframes flap-open;
+     letterDelayMs (300) + letterFlightMs (1750) — letter-launch;
+     burstDelayMs/burstSpawnMs — только JS (HeartField).
+   Заряд удержания передаётся CSS-переменной --charge на .scene (JS).
+   ========================================================================== */
+
+.scene {
+  --charge: 0;
+}
+
+/* --- Поле сердечек (canvas, взрыв + куча + touch) ------------------------ */
+
+.heart-field {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  /* Включаем только когда конверт открыт: canvas перехватывает касания
+     и расталкивает сердечки, не мешая остальным жестам страницы. */
+  touch-action: none;
+}
+
+.scene[data-flow-state='opening'] .heart-field,
+.scene[data-flow-state='opened'] .heart-field {
+  pointer-events: auto;
+}
+
+/* --- Заряд удержания: сердце пульсирует сильнее и светится ---------------- */
+
+/* Обёртка тряски: transform задаётся из JS (амплитуда растёт с --charge). */
+.scene__shake {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* Ускоренное «тревожное» сердцебиение во время удержания. */
+.scene--charging .scene-heart {
+  animation: heart-beat-charge 0.85s ease-in-out infinite;
+}
+
+@keyframes heart-beat-charge {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.1);
+  }
+  30% {
+    transform: scale(1.02);
+  }
+  46% {
+    transform: scale(1.15);
+  }
+  64% {
+    transform: scale(1);
+  }
+}
+
+/* Свечение сердца: яркость + двойной ореол растут вместе с зарядом. */
+.scene--charging .scene-heart__shape {
+  filter: brightness(calc(1 + var(--charge) * 0.3))
+    drop-shadow(0 14px 24px rgba(184, 58, 85, 0.42))
+    drop-shadow(0 0 calc(var(--charge) * 30px) rgba(255, 150, 175, 0.85));
+}
+
+/* Расходящееся кольцо вокруг печати — прямая обратная связь удержания. */
+.scene__seal-ripple {
+  position: absolute;
+  inset: -16%;
+  border: 2px solid rgba(255, 143, 163, 0.85);
+  border-radius: 50%;
+  opacity: calc(var(--charge) * 0.85);
+  transform: scale(calc(0.9 + var(--charge) * 0.4));
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+/* Финальный пульс сердца в момент перехода к открытию. */
+.scene[data-flow-state='opening'] .scene-heart {
+  animation: heart-final-pulse 0.5s ease-out both;
+}
+
+@keyframes heart-final-pulse {
+  0% {
+    transform: scale(1.08);
+  }
+  45% {
+    transform: scale(1.24);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* --- Внутреннее свечение конверта ---------------------------------------- */
+
+/*
+ * Свет изнутри: лежит ПОВЕРХ корпуса (z-index 1), но ПОД печатью-сердцем
+ * (печать получает z-index 2) — свет слегка освещает края клапанов,
+ * а сердце читается чисто.
+ */
+.scene__env-glow {
+  position: absolute;
+  left: 50%;
+  top: 2%;
+  width: 82%;
+  height: 38%;
+  transform: translateX(-50%);
+  z-index: 1;
+  background: radial-gradient(
+    62% 82% at 50% 34%,
+    rgba(255, 197, 214, 0.95),
+    rgba(255, 160, 195, 0.4) 45%,
+    rgba(255, 150, 200, 0) 76%
+  );
+  filter: blur(10px);
+  mix-blend-mode: screen;
+  opacity: calc(var(--charge) * 0.9);
+  pointer-events: none;
+}
+
+.scene__seal {
+  z-index: 2;
+}
+
+/* В момент открытия вспышка изнутри гаснет — свет «уходит» со взрывом. */
+.scene[data-flow-state='opening'] .scene__env-glow {
+  animation: env-glow-burst 1s ease-out both;
+}
+
+@keyframes env-glow-burst {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* --- Лучи света из-под клапана + ореол ------------------------------------ */
+
+.scene__env-rays {
+  position: absolute;
+  inset: -14% -6%;
+  z-index: 3;
+  pointer-events: none;
+  opacity: calc(var(--charge) * 0.75);
+}
+
+.scene[data-flow-state='opening'] .scene__env-rays {
+  animation: rays-flash 1.2s ease-out both;
+}
+
+@keyframes rays-flash {
+  0% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.scene__env-ray {
+  position: absolute;
+  left: 50%;
+  top: 6%;
+  width: 9%;
+  height: 58%;
+  background: linear-gradient(
+    to top,
+    rgba(255, 218, 228, 0),
+    rgba(255, 226, 236, 0.6) 45%,
+    rgba(255, 236, 244, 0)
+  );
+  transform-origin: 50% 100%;
+  filter: blur(4px);
+  mix-blend-mode: screen;
+}
+
+.scene__env-ray--1 {
+  transform: translateX(-50%) rotate(-16deg);
+}
+
+.scene__env-ray--2 {
+  transform: translateX(-50%) rotate(0deg);
+  height: 70%;
+}
+
+.scene__env-ray--3 {
+  transform: translateX(-50%) rotate(16deg);
+}
+
+.scene__env-halo {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 125%;
+  aspect-ratio: 2 / 1;
+  transform: translate(-50%, -32%);
+  background: radial-gradient(
+    50% 50% at 50% 50%,
+    rgba(255, 208, 224, 0.6),
+    rgba(255, 208, 224, 0) 72%
+  );
+  filter: blur(8px);
+  mix-blend-mode: screen;
+}
+
+/* --- Открытие верхнего клапана (3D вокруг линии сгиба) -------------------- */
+
+/*
+ * Обёртка клапана несёт drop-shadow (тень повторяет clip-path фигуры).
+ * filter сглаживает 3D-контекст потомков, поэтому перспективу для
+ * вращения задаём прямо на обёртке (origin — верхняя кромка конверта).
+ */
+.scene__env-flap-wrap--top {
+  perspective: 900px;
+  perspective-origin: 50% 0;
+}
+
+/* Клапан и посадка конверта: анимации объявлены для opening И opened —
+   при смене состояния декларация не меняется, анимация не рестартует,
+   fill both удерживает конечное состояние (без snap-back). */
+.scene[data-flow-state='opening'] .scene__env-flap--top,
+.scene[data-flow-state='opened'] .scene__env-flap--top {
+  transform-origin: 50% 0;
+  animation: flap-open 750ms cubic-bezier(0.32, 0.86, 0.36, 1.06) both;
+}
+
+@keyframes flap-open {
+  0% {
+    transform: rotateX(0deg);
+  }
+  58% {
+    transform: rotateX(-138deg);
+  }
+  80% {
+    /* Небольшая инерция: проскок за линию полного раскрытия. */
+    transform: rotateX(-175deg);
+  }
+  100% {
+    transform: rotateX(-168deg);
+  }
+}
+
+/* Конверт после открытия мягко уходит вниз, освобождая центр письму. */
+.scene[data-flow-state='opening'] .scene__envelope,
+.scene[data-flow-state='opened'] .scene__envelope {
+  animation: envelope-settle 1.4s ease-in-out 1.15s both;
+}
+
+@keyframes envelope-settle {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(0, 7vh, -24px) scale(0.97);
+  }
+}
+
+/* --- Письмо: вылет, раскладка сгибов, чистая сторона ---------------------- */
+
+.scene__letter-fly {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  width: clamp(240px, 78vw, 340px);
+  aspect-ratio: 3 / 4;
+  pointer-events: none;
+  transform: translate(-50%, -46%);
+  /* 300ms задержки = scene2.letterDelayMs; 1750ms = scene2.letterFlightMs.
+     fill-mode both: во время задержки действует 0% кадр (opacity 0) —
+     отдельный visibility не нужен (он «мусорил» после анимации). */
+  animation: letter-launch 1750ms cubic-bezier(0.26, 0.72, 0.3, 1) 300ms both;
+}
+
+@keyframes letter-launch {
+  0% {
+    transform: translate(-50%, -38%) scale(0.5) rotate(7deg) rotateX(38deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  55% {
+    transform: translate(-50%, -52%) scale(0.92) rotate(-3deg) rotateX(14deg);
+  }
+  76% {
+    /* Лёгкий инерционный перехлёст перед остановкой. */
+    transform: translate(-50%, -56%) scale(1.03) rotate(1.5deg) rotateX(-4deg);
+  }
+  100% {
+    transform: translate(-50%, -55%) scale(1) rotate(0deg) rotateX(0deg);
+    opacity: 1;
+  }
+}
+
+.scene__letter-sheet {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  transform-style: preserve-3d;
+  /* Мягкая объёмная тень листа в воздухе. */
+  filter: drop-shadow(0 18px 30px rgba(61, 44, 46, 0.28));
+}
+
+/*
+ * Три сложенные полосы — «помятое» письмо в начале полёта.
+ * Каждая раскладывается вокруг своей линии сгиба последовательно.
+ */
+.scene__letter-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 34.5%;
+  background:
+    linear-gradient(180deg, rgba(97, 70, 36, 0.14), rgba(97, 70, 36, 0) 22%),
+    linear-gradient(160deg, #f6ead0 0%, #efe0c0 60%, #e9d8b4 100%);
+  box-shadow: inset 0 0 0 1px rgba(122, 90, 46, 0.08);
+}
+
+.scene__letter-band--top {
+  top: 0;
+  border-radius: 10px 10px 2px 2px;
+  transform-origin: 50% 0;
+  transform: rotateX(52deg);
+  animation: band-unfold-top 480ms cubic-bezier(0.3, 0.8, 0.34, 1) 520ms both;
+}
+
+.scene__letter-band--middle {
+  top: 33%;
+  transform: scaleX(0.94) skewX(-2deg);
+  animation: band-unfold-middle 460ms cubic-bezier(0.3, 0.8, 0.34, 1) 930ms both;
+}
+
+.scene__letter-band--bottom {
+  bottom: 0;
+  border-radius: 2px 2px 10px 10px;
+  transform-origin: 50% 100%;
+  transform: rotateX(-44deg);
+  animation: band-unfold-bottom 480ms cubic-bezier(0.3, 0.8, 0.34, 1) 1310ms both;
+}
+
+@keyframes band-unfold-top {
+  to {
+    transform: rotateX(0deg);
+  }
+}
+
+@keyframes band-unfold-middle {
+  to {
+    transform: scaleX(1) skewX(0deg);
+  }
+}
+
+@keyframes band-unfold-bottom {
+  to {
+    transform: rotateX(0deg);
+  }
+}
+
+/* Поперечная складка-затенение, тающая по мере раскладки. */
+.scene__letter-crease {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(97, 70, 36, 0) 30%,
+      rgba(97, 70, 36, 0.16) 34%,
+      rgba(255, 255, 255, 0.25) 37%,
+      rgba(97, 70, 36, 0) 42%
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(97, 70, 36, 0) 64%,
+      rgba(97, 70, 36, 0.13) 68%,
+      rgba(255, 255, 255, 0.22) 71%,
+      rgba(97, 70, 36, 0) 76%
+    );
+  animation: crease-fade 700ms ease 1000ms both;
+  pointer-events: none;
+}
+
+@keyframes crease-fade {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Чистая лицевая сторона: проявляется, когда сгибы расправились. */
+.scene__letter-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background:
+    radial-gradient(
+      120% 80% at 22% 4%,
+      rgba(255, 255, 255, 0.5),
+      rgba(255, 255, 255, 0) 52%
+    ),
+    radial-gradient(
+      130% 110% at 88% 104%,
+      rgba(146, 108, 58, 0.14),
+      rgba(146, 108, 58, 0) 58%
+    ),
+    linear-gradient(158deg, #faf3e3 0%, #f4ead2 58%, #eee0c2 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -2px 8px rgba(122, 90, 46, 0.14);
+  opacity: 0;
+  animation: letter-face-in 550ms ease 1080ms both;
+}
+
+@keyframes letter-face-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Едва заметная текстура чистой стороны. */
+.scene__letter-face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
+  opacity: 0.05;
+  mix-blend-mode: multiply;
+}
+
+/* --- Печать текста -------------------------------------------------------- */
+
+.scene__letter-text {
+  margin: 0;
+  padding: clamp(1.4rem, 6vw, 2rem);
+  /* Рукописный шрифт (Caveat подключён в index.html). */
+  font-family: 'Caveat', 'Segoe Script', 'Comic Sans MS', cursive;
+  font-size: clamp(1.35rem, 5.6vw, 1.7rem);
+  font-weight: 600;
+  line-height: 1.45;
+  color: #4a322b;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.scene__letter-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.12em;
+  background: currentColor;
+  animation: caret-blink 0.85s steps(1) infinite;
+}
+
+@keyframes caret-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* --- Сцена 2: уменьшенное движение ---------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .heart-field {
+    display: none;
+  }
+
+  .scene--charging .scene-heart,
+  .scene[data-flow-state='opening'] .scene-heart {
+    animation: none;
+  }
+
+  .scene__seal-ripple,
+  .scene__env-rays {
+    display: none;
+  }
+
+  .scene__env-glow {
+    opacity: 0;
+  }
+
+  .scene[data-flow-state='opening'] .scene__env-flap--top {
+    animation: none;
+    transform: rotateX(-168deg);
+  }
+
+  .scene[data-flow-state='opening'] .scene__envelope {
+    animation: none;
+  }
+
+  .scene__letter-fly {
+    animation: none;
+    transform: translate(-50%, -55%);
+  }
+
+  .scene__letter-band,
+  .scene__letter-crease {
+    animation: none;
+    transform: none;
+    opacity: 0;
+  }
+
+  .scene__letter-face {
+    animation: none;
+    opacity: 1;
+  }
+
+  .scene__letter-caret {
+    animation: none;
   }
 }

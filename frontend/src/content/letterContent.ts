@@ -14,6 +14,12 @@ export interface LetterContent {
   paragraphs: string[];
   /** Подпись в конце письма. */
   signature: string;
+  /**
+   * Текст, который печатается на письме во второй сцене.
+   * Отдельное поле — чтобы заменить заглушку на настоящий текст,
+   * не трогая анимацию (сцена печатает эту строку посимвольно).
+   */
+  sceneText: string;
 }
 
 export const letterContent: LetterContent = {
@@ -24,4 +30,5 @@ export const letterContent: LetterContent = {
     'Этот абзац — временная заглушка. Содержимое задаётся в файле src/content/letterContent.ts и не зависит от оформления интерфейса.',
   ],
   signature: '— с любовью',
+  sceneText: 'Здесь будет моё письмо для тебя...',
 };

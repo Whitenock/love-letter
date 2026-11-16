@@ -98,6 +98,15 @@ function GlobeIcon() {
   );
 }
 
+function SendIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M22 2L11 13" />
+      <path d="M22 2l-7 20-4-9-9-4z" />
+    </svg>
+  );
+}
+
 function ArrowDownIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -165,10 +174,46 @@ const androidSteps: GuideStep[] = [
   },
 ];
 
+/**
+ * Шаги для компьютера: письмо открывается на телефоне, поэтому сначала
+ * нужно переслать ссылку туда. Текст первого шага зависит от того,
+ * открыта ли ссылка внутри Telegram (тогда есть кнопка «Переслать»).
+ */
+function desktopStepsForPhone(inTelegram: boolean): GuideStep[] {
+  return [
+    inTelegram
+      ? {
+          icon: <SendIcon />,
+          title: 'Перешли ссылку на телефон',
+          text: 'В Telegram: «Переслать» → «Избранное» или чат с собой',
+        }
+      : {
+          icon: <SendIcon />,
+          title: 'Отправь ссылку на телефон',
+          text: 'Любым способом: мессенджер, почта, AirDrop',
+        },
+    {
+      icon: <CompassIcon />,
+      title: 'Открой её в Safari',
+      text: 'На iPhone — не во встроенном браузере Telegram',
+    },
+    {
+      icon: <ShareIcon />,
+      title: 'Нажми «Поделиться»',
+      text: 'Квадратик со стрелкой — внизу экрана Safari',
+    },
+    {
+      icon: <AddToHomeIcon />,
+      title: '«На экран “Домой”» → «Добавить»',
+      text: 'Иконка с сердцем появится на рабочем столе телефона',
+    },
+  ];
+}
+
 const SUBTITLES: Record<GuidePlatform, string> = {
   ios: 'Чтобы прочитать письмо, добавь его на рабочий стол — это займёт 10 секунд.',
   android: 'Чтобы прочитать письмо, установи его как приложение — это займёт 10 секунд.',
-  desktop: 'Открой эту ссылку на телефоне — письмо открывается из приложения.',
+  desktop: 'Это письмо открывается на телефоне — как установленное приложение.',
 };
 
 /**
@@ -180,12 +225,14 @@ const SUBTITLES: Record<GuidePlatform, string> = {
 export function InstallGuide() {
   const context = detectGuideContext();
   const baseSteps = context.platform === 'android' ? androidSteps : iOSSteps;
-  // Если открыли во внутреннем браузере (Telegram и т.п.) — первый шаг:
-  // перейти в Safari / Chrome, иначе инструкция установки не сработает.
+  // Компьютер: письмо открывается на телефоне — сначала переслать ссылку.
+  // Мобильный внутренний браузер: первый шаг — перейти в Safari/Chrome.
   const steps =
-    context.inApp && context.platform !== 'desktop'
-      ? [context.platform === 'ios' ? openInSafariStep : openInChromeStep, ...baseSteps]
-      : baseSteps;
+    context.platform === 'desktop'
+      ? desktopStepsForPhone(context.inApp)
+      : context.inApp
+        ? [context.platform === 'ios' ? openInSafariStep : openInChromeStep, ...baseSteps]
+        : baseSteps;
 
   return (
     <main className="install-guide">

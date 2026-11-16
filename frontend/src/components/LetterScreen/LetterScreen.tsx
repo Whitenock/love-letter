@@ -2,7 +2,6 @@ import type { LetterFlowState } from '../../state/letterFlow';
 import { letterContent } from '../../content/letterContent';
 import { appConfig } from '../../config/appConfig';
 import { LetterScene } from '../LetterScene/LetterScene';
-import { Letter } from '../Letter/Letter';
 import { AnimationLayer } from '../AnimationLayer/AnimationLayer';
 import './LetterScreen.css';
 
@@ -16,11 +15,10 @@ interface LetterScreenProps {
 }
 
 /**
- * Главный экран: кинематографичная сцена с письмом (idle/opening),
- * открытый текст письма (opened) и зарезервированный слой анимаций.
+ * Главный экран: единая сцена со конвертом — удержание сердца, открытие,
+ * взрыв сердечек, письмо с печатью текста (idle/opening/opened).
  */
 export function LetterScreen({ state, greetingName, isTelegram, onOpen }: LetterScreenProps) {
-  const showScene = state === 'idle' || state === 'opening';
   const showHint = state === 'idle';
 
   return (
@@ -31,12 +29,11 @@ export function LetterScreen({ state, greetingName, isTelegram, onOpen }: Letter
       </header>
 
       <div className="screen__stage" data-flow-state={state}>
-        {showScene ? <LetterScene state={state} onOpen={onOpen} /> : null}
-        {state === 'opened' ? <Letter content={letterContent} /> : null}
+        <LetterScene state={state} onOpen={onOpen} />
       </div>
 
       <footer className="screen__footer">
-        {showHint ? <p className="screen__hint">Нажми на сердце, чтобы открыть письмо</p> : null}
+        {showHint ? <p className="screen__hint">Удерживай сердце, чтобы открыть письмо</p> : null}
         {appConfig.debug.showDevelopmentBadge && !isTelegram ? (
           <p className="screen__dev-note">
             Режим разработки: Telegram WebApp API недоступен
