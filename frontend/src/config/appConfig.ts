@@ -14,5 +14,8 @@ export const appConfig = {
   debug: {
     /** Показывать служебную плашку в режиме разработки. */
     showDevelopmentBadge: import.meta.env.DEV,
+    /** В dev-режиме показывать письмо и в обычном браузере —
+        чтобы не проходить инструкцию установки при каждой разработке. */
+    bypassInstallGuide: import.meta.env.DEV,
   },
 } as const;

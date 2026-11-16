@@ -1,0 +1,231 @@
+/* Экран-инструкция по установке. Плавные появления — без резких скачков. */
+
+.install-guide {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px
+    calc(env(safe-area-inset-bottom, 0px) + 16px);
+  overflow-y: auto;
+}
+
+.install-guide__card {
+  width: min(440px, 100%);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 28px 22px;
+  animation: guide-card-in 0.6s ease both;
+}
+
+.install-guide__header {
+  text-align: center;
+  animation: guide-fade-up 0.55s ease both;
+}
+
+.install-guide__badge {
+  font-size: 40px;
+  line-height: 1;
+  margin-bottom: 8px;
+  animation: guide-badge-in 0.8s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+}
+
+.install-guide__title {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.install-guide__subtitle {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+/* Шаги появляются последовательно, с задержкой каждого следующего. */
+.install-guide__steps {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.install-guide__step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: #fdf8f4;
+  border-radius: var(--radius-md);
+  animation: guide-fade-up 0.55s ease both;
+}
+
+.install-guide__step:nth-child(1) {
+  animation-delay: 0.4s;
+}
+
+.install-guide__step:nth-child(2) {
+  animation-delay: 0.7s;
+}
+
+.install-guide__step:nth-child(3) {
+  animation-delay: 1s;
+}
+
+.install-guide__step-number {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.install-guide__step-icon {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #fbe4ea;
+  color: var(--color-accent-dark);
+  animation: guide-pulse 2.2s ease-in-out infinite 1.5s;
+}
+
+.install-guide__step-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.install-guide__step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.install-guide__step-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.install-guide__step-text {
+  font-size: 13px;
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+
+/* Стрелка-подсказка к кнопке «Поделиться» в Safari. */
+.install-guide__hint {
+  margin: 18px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--color-accent-dark);
+  font-size: 13px;
+  text-align: center;
+  animation: guide-fade-up 0.55s ease 1.4s both;
+}
+
+.install-guide__hint svg {
+  width: 20px;
+  height: 20px;
+  animation: guide-bounce 1.8s ease-in-out infinite;
+}
+
+.install-guide__footer {
+  margin-top: 20px;
+  text-align: center;
+  animation: guide-fade-up 0.55s ease 1.6s both;
+}
+
+.install-guide__footer p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+/* --- Кейфреймы --- */
+
+@keyframes guide-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes guide-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes guide-badge-in {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes guide-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(224, 82, 109, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgba(224, 82, 109, 0);
+  }
+}
+
+@keyframes guide-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+/* Уважаем настройку «уменьшить движение». */
+@media (prefers-reduced-motion: reduce) {
+  .install-guide__card,
+  .install-guide__header,
+  .install-guide__badge,
+  .install-guide__step,
+  .install-guide__hint,
+  .install-guide__footer,
+  .install-guide__step-icon svg {
+    animation: none;
+  }
+
+  .install-guide__step-icon {
+    animation: none;
+  }
+}
