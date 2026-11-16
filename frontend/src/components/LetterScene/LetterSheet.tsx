@@ -20,18 +20,19 @@ interface LetterSheetProps {
 export function LetterSheet({ openAt }: LetterSheetProps) {
   const [typedLength, setTypedLength] = useState(0);
   const typingTimer = useRef<number | null>(null);
-  const typingStarted = useRef(false);
 
   const fullText = letterContent.sceneText;
 
   useEffect(() => {
-    if (openAt === null || typingStarted.current) {
+    if (openAt === null) {
       return;
     }
-    typingStarted.current = true;
     playSoundCue('text-scratch');
     // Компонент монтируется в момент старта открытия, поэтому задержка
-    // равна полному typingStartMs от начала открытия.
+    // равна полному typingStartMs от начала открытия. Без флага-защиты:
+    // в StrictMode первый прогон эффекта ставит таймер, cleanup его снимает,
+    // второй прогон запускает заново — флаг заблокировал бы рестарт и печать
+    // никогда не началась бы.
     const delay = window.setTimeout(() => {
       typingTimer.current = window.setInterval(() => {
         setTypedLength((current) => {

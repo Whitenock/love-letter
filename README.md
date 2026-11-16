@@ -9,9 +9,11 @@
 - **Telegram Mini App (бонус)**: через бота, когда сеть позволяет подключиться
   к Telegram API (см. раздел про VPN ниже).
 
-Текущий этап — **техническая база**: инициализация Telegram WebApp API,
-машина состояний и заглушки интерфейса. Анимации, музыка и финальный дизайн
-будут добавлены на следующих этапах.
+Текущий этап — **полная интерактивная сцена**: конверт с сердцем-печатью,
+открытие удержанием сердца, взрыв сердечек с физикой кучки, письмо с
+печатью текста, музыкальный плеер и PWA-инсталляция на телефон.
+Остались контент (настоящий текст письма, треки), звуковые эффекты сцены
+и финальный дизайн.
 
 ## Быстрый старт: публикация на GitHub Pages (PWA)
 
@@ -102,24 +104,39 @@ telegram-love-letter/
     ├── package.json
     ├── tsconfig.json
     ├── vite.config.ts
-    ├── index.html                # подключает официальный telegram-web-app.js
+    ├── index.html                # telegram-web-app.js, манифест PWA, мета iOS
+    ├── public/                   # иконки, manifest.json, music/ (треки плеера)
     └── src/
         ├── main.tsx
         ├── App.tsx
         ├── components/           # по папке на компонент: tsx + css
         │   ├── AppLoader/        #   экран загрузки (state: loading)
-        │   ├── LetterScreen/     #   главный экран
-        │   ├── Envelope/         #   заглушка конверта
-        │   ├── Heart/            #   сердце с надписью «Открыть»
-        │   ├── Letter/           #   письмо
+        │   ├── InstallGuide/     #   инструкция установки (письмо только
+        │   │                     #   из установленного приложения)
+        │   ├── LetterScreen/     #   главный экран (шапка + сцена + футер)
+        │   ├── LetterScene/      #   вся анимационная сцена:
+        │   │   ├── LetterScene.tsx  # оркестратор (фазы отсчитываются от openAt)
+        │   │   ├── LetterSheet.tsx  # письмо: вылет, разглаживание, печать
+        │   │   ├── HeartTrail.tsx   # шлейф сердечек за летящим конвертом
+        │   │   └── HeartField.tsx   # взрыв сердечек и куча (canvas-физика)
+        │   ├── MusicPlayer/      #   капсула-плеер (стиль Dynamic Island)
         │   └── AnimationLayer/   #   зарезервированный контейнер для эффектов
         ├── hooks/
         │   ├── useTelegram.ts    #   инициализация WebApp API
-        │   └── useLetterFlow.ts  #   поток loading -> idle -> opening -> opened
+        │   ├── useDisplayMode.ts #   высота viewport -> --app-viewport-height
+        │   ├── useLetterFlow.ts  #   поток loading -> idle -> opening -> opened
+        │   └── useMusicPlayer.ts #   мост React <-> сервис плеера
+        ├── services/
+        │   ├── musicPlayer.ts    #   единый Audio-экземпляр, Media Session,
+        │   │                     #   громкость/mute сохраняются в localStorage
+        │   └── soundCues.ts      #   шина звуковых событий сцены (аудио-модуль
+        │                         #   подключается позже, вызовы уже на месте)
         ├── state/
         │   └── letterFlow.ts     # редьюсер состояний
-        ├── config/appConfig.ts   # тайминги и флаги
-        ├── content/letterContent.ts # ТЕКСТ ПИСЬМА (отдельно от UI)
+        ├── config/appConfig.ts   # тайминги и флаги (сцена, взрыв, печать)
+        ├── content/
+        │   ├── letterContent.ts  # ТЕКСТ ПИСЬМА (отдельно от UI)
+        │   └── musicTracks.ts    # ПЛЕЙЛИСТ (файлы лежат в public/music/)
         ├── telegram/             # типизированная обёртка Telegram WebApp API
         ├── types/                # типы TypeScript
         ├── styles/               # variables.css (токены), global.css
@@ -128,6 +145,26 @@ telegram-love-letter/
 
 ## Что уже работает
 
+- **Сцена открытия (сцена 2)**: объёмный конверт вылетает из глубины со
+  шлейфом сердечек (canvas) и останавливается в центре. Сердце-печата
+  бьётся; удержание накапливает заряд — свечение, тряска, тактильные
+  тики. Успешное удержание (1,8 с) откидывает клапан, запускает взрыв
+  сердечек и вылет письма с разглаживанием сгибов и печатью текста.
+- **Физика кучки сердец**: сердечки падают с гравитацией и лёгким
+  сопротивлением воздуха и ложатся в кучу. Куча — карта высот с
+  релаксацией (ступеньки больше 15 px перетекают к более низкой
+  соседке), поэтому получается пологая горка, а не вертикальные
+  «башни»; ударяющиеся сердца отскакивают, катятся по склону и
+  оседают без резких прыжков. Касание после открытия расталкивает
+  сердечки обратно в полёт.
+- **Музыкальный плеер**: капсула в стиле Dynamic Island в правом верхнем
+  углу + раскрывающаяся панель со списком треков, перемоткой, громкостью
+  и mute (сохраняются в localStorage). Один Audio-экземпляр живёт в
+  сервисе `musicPlayer.ts`, поэтому смены состояний сцены не прерывают
+  воспроизведение; системный Media Session (замок экрана, наушники)
+  поддерживается. Плейлист задаётся в `content/musicTracks.ts`, файлы —
+  в `frontend/public/music/`. Музыка стартует только по явному жесту
+  пользователя (ограничения мобильных браузеров).
 - **Бот**: команда `/start` с приветствием и кнопкой открытия Mini App
   (`Markup.button.webApp`), команда `/app`, поддержка Deep Linking
   (`/start <payload>` — payload читается и логируется, точка будущей
@@ -139,9 +176,8 @@ telegram-love-letter/
 - **Режим браузера**: если Telegram API недоступен, приложение работает
   в обычном браузере с плашкой «Режим разработки» — удобно для разработки.
 - **Машина состояний**: `loading` → `idle` → `opening` → `opened`.
-  Нажатие на сердце переводит конверт в `opening`, затем показывается
-  письмо. Переход-заглушка реализован таймером и будет заменён
-  анимационной последовательностью (см. `useLetterFlow.ts`).
+  Сцена-оркестратор отсчитывает фазы анимации от момента
+  `dispatch('open-request')`; все тайминги — в `appConfig.ts`.
 - **Безопасность**: серверная проверка `initData` по официальному
   алгоритму Telegram (HMAC-SHA256 + свежесть `auth_date`), endpoint
   `POST /api/validate-init-data`. Токен бота хранится только в `.env`.
@@ -263,9 +299,15 @@ curl http://localhost:3000/healthz # healthcheck backend
    запущен (`npm --prefix backend run dev`).
 2. Отправьте боту `/start` в Telegram → нажмите кнопку «💌 Открыть письмо».
 3. Mini App откроется внутри Telegram. Проверьте:
-   - конверт с сердцем по центру, надпись «Открыть»;
-   - нажатие на сердце → письмо через ~1,2 с (временная заглушка);
-   - экран занимает всю высоту, интерфейс не «уезжает».
+   - конверт с бьющимся сердцем-печатью по центру;
+   - удержание сердца ~2 с → клапан откидывается, сердечки вырываются
+     из конверта и складываются в кучу внизу, письмо вылетает,
+     разглаживается и печатает текст;
+   - сердечки в куче не встают вертикальными башнями; касание
+     расталкивает их;
+   - плеер в углу: треугольник запускает трек, тап по капсуле
+     раскрывает список, свайп-громкость и mute сохраняются между
+     сессиями.
 4. Тестировать стоит и на iOS, и на Android: на iOS Telegram меняет
    высоту viewport при раскрытии — приложение подстраивается через
    `viewportStableHeight`.
@@ -275,10 +317,15 @@ curl http://localhost:3000/healthz # healthcheck backend
 | Что менять | Где |
 |---|---|
 | Текст письма, заголовок, подпись, имя получателя, абзацы | `frontend/src/content/letterContent.ts` |
-| Тайминги переходов | `frontend/src/config/appConfig.ts` |
-| Анимация открытия конверта | координация в `frontend/src/hooks/useLetterFlow.ts` + CSS-классы `data-flow-state` на `.envelope`, `.screen__stage` |
+| Плейлист: добавить/убрать треки | `frontend/src/content/musicTracks.ts` + файлы в `frontend/public/music/` |
+| Тайминги сцены (полёт, удержание, взрыв, печать) | `frontend/src/config/appConfig.ts` |
+| Хореография сцены (фазы открытия) | `frontend/src/components/LetterScene/LetterScene.tsx` |
+| Физика сердечек (гравитация, куча, касания) | `frontend/src/components/LetterScene/HeartField.tsx` |
+| Внешний вид письма и печати текста | `frontend/src/components/LetterScene/LetterSheet.tsx` + `LetterScene.css` |
+| Звуковые эффекты сцены | подписка `onSoundCue` в новом аудио-модуле; события уже идут из `LetterScene.tsx`, типы — `frontend/src/services/soundCues.ts` |
+| Плеер (внешний вид, управление) | `frontend/src/components/MusicPlayer/` + `services/musicPlayer.ts` |
 | Частицы, блики, прочие эффекты | `frontend/src/components/AnimationLayer/` |
-| Графика конверта | `frontend/src/assets/` + `components/Envelope/` |
+| Графика конверта | `frontend/src/assets/` + `components/LetterScene/LetterScene.css` |
 | Новые команды бота | `backend/src/handlers/commandHandlers.ts` |
 | Новые HTTP-эндпоинты | `backend/src/server/httpServer.ts` (handleRequest) |
 | Персонализация по start-параметру | `backend` (`ctx.payload` в `/start`) и `frontend` (`environment.startParam`) |
