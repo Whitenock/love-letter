@@ -3,6 +3,7 @@ import { letterContent } from '../../content/letterContent';
 import { appConfig } from '../../config/appConfig';
 import { LetterScene } from '../LetterScene/LetterScene';
 import { AnimationLayer } from '../AnimationLayer/AnimationLayer';
+import { MusicPlayer } from '../MusicPlayer/MusicPlayer';
 import './LetterScreen.css';
 
 interface LetterScreenProps {
@@ -42,6 +43,7 @@ export function LetterScreen({ state, greetingName, isTelegram, onOpen }: Letter
       </footer>
 
       <AnimationLayer state={state} />
+      <MusicPlayer />
     </main>
   );
 }
