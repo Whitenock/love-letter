@@ -16,18 +16,28 @@ export interface MusicTrack {
   title: string;
   /** Исполнитель (если есть). */
   artist?: string;
-  /** Путь к файлу: то, что лежит в public/music/, адресуется как /music/… */
+  /** Путь к файлу: то, что лежит в public/music/, адресуется как music/…
+   * (префикс base добавляется автоматически, см. withBase ниже). */
   src: string;
   /** Обложка — путь к изображению (public/ или импорт). */
   cover?: string;
 }
+
+/**
+ * Префикс путей к ассетам из public/.
+ * BASE_URL при base: './' равен './' — путь получается относительным и
+ * работает и на корневом домене (dev), и в подкаталоге GitHub Pages
+ * (https://<user>.github.io/<repo>/), где абсолютный /music/… дал бы 404.
+ */
+const withBase = (path: string): string =>
+  `${import.meta.env.BASE_URL}${path}`.replace(/\/{2,}/g, '/');
 
 export const musicTracks: MusicTrack[] = [
   {
     id: 'morgenshtern-cvetok',
     title: 'Цветок',
     artist: 'MorgenShtern',
-    src: '/music/morgenshtern-cvetok.mp3',
+    src: withBase('music/morgenshtern-cvetok.mp3'),
   },
 
   // ── Демо-треки для проверки плеера. Можно удалить, добавив свои песни. ──
@@ -35,12 +45,12 @@ export const musicTracks: MusicTrack[] = [
     id: 'demo-night-serenade',
     title: 'Ночная серенада',
     artist: 'Демо',
-    src: '/music/demo/night-serenade.wav',
+    src: withBase('music/demo/night-serenade.wav'),
   },
   {
     id: 'demo-dawn',
     title: 'Рассвет',
     artist: 'Демо',
-    src: '/music/demo/dawn.wav',
+    src: withBase('music/demo/dawn.wav'),
   },
 ];

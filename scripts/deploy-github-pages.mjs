@@ -101,6 +101,16 @@ function gitHasIdentity() {
   }
 }
 
+/** Есть ли в репозитории хотя бы один коммит. */
+function gitHasCommits(cwd) {
+  try {
+    execFileSync('git', ['rev-parse', '--verify', 'HEAD'], { cwd, encoding: 'utf8', stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function commitAll(cwd, message = 'Update: изменения кода проекта') {
   git(['add', '-A'], cwd);
   const hasChanges = execFileSync('git', ['status', '--porcelain'], { cwd, encoding: 'utf8' }).trim() !== '';
@@ -142,7 +152,13 @@ async function main() {
     git(['config', 'user.name', GH_USERNAME], rootDir);
     git(['config', 'user.email', `${GH_USERNAME}@users.noreply.github.com`], rootDir);
   }
-  commitAll(rootDir, 'Initial commit: романтическое письмо (PWA + Telegram Mini App)');
+  const hasCommits = gitHasCommits(rootDir);
+  const commitMessage =
+    process.env.DEPLOY_MESSAGE ||
+    (hasCommits
+      ? 'Update: романтическое письмо (PWA + Telegram Mini App)'
+      : 'Initial commit: романтическое письмо (PWA + Telegram Mini App)');
+  commitAll(rootDir, commitMessage);
 
   const originUrl = `https://x-access-token:${GH_TOKEN}@github.com/${repoFull}.git`;
   try {
