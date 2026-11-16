@@ -155,8 +155,13 @@ async function main() {
 
   // --- 3. Сборка frontend ---
   console.log('Собираю frontend...');
-  const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  execFileSync(npmCmd, ['--prefix', 'frontend', 'run', 'build'], { cwd: rootDir, stdio: 'inherit' });
+  // shell: true — обязательно на Windows: без него spawn .cmd падает с EINVAL
+  // (ограничение безопасности Node >= 20.12).
+  execFileSync('npm --prefix frontend run build', {
+    cwd: rootDir,
+    stdio: 'inherit',
+    shell: true,
+  });
 
   // --- 4. Публикация dist в ветку gh-pages ---
   const tempDir = mkdtempSync(path.join(os.tmpdir(), 'love-letter-ghpages-'));
