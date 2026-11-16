@@ -101,7 +101,7 @@ function gitHasIdentity() {
   }
 }
 
-function commitAll(cwd, message) {
+function commitAll(cwd, message = 'Update: изменения кода проекта') {
   git(['add', '-A'], cwd);
   const hasChanges = execFileSync('git', ['status', '--porcelain'], { cwd, encoding: 'utf8' }).trim() !== '';
   if (!hasChanges) {
