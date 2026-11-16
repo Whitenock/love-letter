@@ -25,6 +25,11 @@ body {
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
+  /* Весь интерфейс интерактивный (удержание сердца), текст декоративный.
+     Без этого долгое удержание запускает выделение всей страницы. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 #root {

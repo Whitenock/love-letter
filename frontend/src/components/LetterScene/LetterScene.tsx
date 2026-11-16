@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { LetterFlowState } from '../../state/letterFlow';
 import { appConfig } from '../../config/appConfig';
 import { notifyHapticTap } from '../../telegram/telegramWebApp';
@@ -160,7 +161,10 @@ export function LetterScene({ state, onOpen }: LetterSceneProps) {
     rafRef.current = requestAnimationFrame(step);
   }, [onOpen, reducedMotion]);
 
-  const startHold = useCallback((): void => {
+  const startHold = useCallback((event: ReactPointerEvent<HTMLButtonElement>): void => {
+    // Блокируем нативные реакции браузера на удержание (выделение, drag),
+    // чтобы зажатие сердца всегда оставалось приоритетным жестом.
+    event.preventDefault();
     if (state !== 'idle' || completedRef.current || holdStartRef.current !== null) {
       return;
     }
