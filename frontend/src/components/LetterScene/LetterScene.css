@@ -1,0 +1,391 @@
+/*
+ * Кинематографичная сцена: бумажное письмо + объёмное сердце.
+ *
+ * Слои (z-index внутри .scene):
+ *   0 — контактная тень на «поверхности»;
+ *   1 — canvas со шлейфом из сердечек (письмо летит поверх шлейфа);
+ *   2 — письмо (полёт -> посадка -> лёгкое парение).
+ *
+ * Тайминг scene-flight (2400ms) синхронизирован с
+ * appConfig.scene.flightDurationMs — не менять по отдельности.
+ */
+
+.scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Точка схода перспективы чуть выше центра — письмо подлетает «к глазам». */
+  perspective: 1100px;
+  perspective-origin: 50% 42%;
+}
+
+/* --- Полёт письма ------------------------------------------------------- */
+
+.scene__flight {
+  position: relative;
+  z-index: 2;
+  transform-style: preserve-3d;
+  /* Длительность = appConfig.scene.flightDurationMs. */
+  animation: scene-flight 2.8s both;
+  will-change: transform;
+}
+
+/*
+ * Полёт из глубины: быстрый разгон, плавное торможение, лёгкий
+ * инерционный «перелёт» центра и посадка с микроброском.
+ * timing-function задаётся внутри ключевых кадров — у каждого
+ * сегмента своя кривая.
+ */
+@keyframes scene-flight {
+  0% {
+    transform: translate3d(0, 64vh, -1500px) rotateX(34deg) rotateY(-26deg)
+      rotateZ(12deg) scale(0.34);
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.24, 0.68, 0.32, 1);
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  /* Точка максимальной скорости пройдена; торможение перед центром. */
+  66% {
+    transform: translate3d(0, -1.4vh, 44px) rotateX(-2.4deg) rotateY(2.2deg)
+      rotateZ(-1.8deg) scale(1.012);
+    animation-timing-function: cubic-bezier(0.34, 0, 0.62, 1);
+  }
+
+  /* Инерционный откат назад после «перелёта». */
+  80% {
+    transform: translate3d(0, 0.8vh, -16px) rotateX(1.4deg) rotateY(-1.2deg)
+      rotateZ(1deg) scale(0.995);
+    animation-timing-function: cubic-bezier(0.34, 0, 0.62, 1);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) rotateZ(0deg)
+      scale(1);
+  }
+}
+
+/* Парение после посадки: почти незаметное, очень медленное. */
+.scene__float {
+  transform-style: preserve-3d;
+  animation: scene-float 6.5s ease-in-out 2.8s infinite;
+}
+
+@keyframes scene-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotateZ(0deg);
+  }
+  33% {
+    transform: translate3d(1.5px, -4px, 0) rotateZ(0.5deg);
+  }
+  66% {
+    transform: translate3d(-1.5px, 2px, 0) rotateZ(-0.4deg);
+  }
+}
+
+/* --- Контактная тень ----------------------------------------------------- */
+
+.scene__shadow {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  bottom: max(9%, calc(50% - 30vh));
+  width: clamp(160px, 46vw, 300px);
+  height: clamp(16px, 4vh, 30px);
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse closest-side,
+    rgba(61, 44, 46, 0.32),
+    rgba(61, 44, 46, 0) 78%
+  );
+  filter: blur(6px);
+  /* Появляется и уплотняется вместе с приземлением письма. */
+  animation: scene-shadow-in 2.8s ease-out both;
+}
+
+@keyframes scene-shadow-in {
+  0% {
+    opacity: 0.1;
+    transform: translateX(-50%) scale(0.45);
+  }
+  66% {
+    opacity: 0.85;
+    transform: translateX(-50%) scale(1.04);
+  }
+  100% {
+    opacity: 0.9;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+/* --- Бумажный лист -------------------------------------------------------- */
+
+.scene__paper {
+  position: relative;
+  transform-style: preserve-3d;
+  width: clamp(230px, 72vw, 330px);
+  aspect-ratio: 3 / 4.1;
+}
+
+/* Нижний «торец» стопки страниц — намёк на толщину листа. */
+.scene__paper-edge {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: -5px;
+  height: 8px;
+  border-radius: 0 0 12px 12px;
+  background: linear-gradient(#e6d8c2 0%, #d8c6ab 100%);
+  box-shadow: 0 3px 6px rgba(61, 44, 46, 0.12);
+}
+
+/* Второй лист позади — объём и мягкая глубокая тень. */
+.scene__paper-back {
+  position: absolute;
+  inset: 0;
+  transform: translate3d(7px, 12px, -8px);
+  border-radius: 16px;
+  background: linear-gradient(160deg, #ecdfca 0%, #dcc9ae 100%);
+  box-shadow: 0 24px 48px rgba(61, 44, 46, 0.2);
+}
+
+/* Лицевая сторона: тёплая бумага, освещение сверху-слева, тень по краям. */
+.scene__paper-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background:
+    radial-gradient(
+      120% 80% at 22% 8%,
+      rgba(255, 255, 255, 0.85),
+      rgba(255, 255, 255, 0) 55%
+    ),
+    radial-gradient(
+      140% 110% at 85% 100%,
+      rgba(196, 168, 138, 0.3),
+      rgba(196, 168, 138, 0) 60%
+    ),
+    linear-gradient(160deg, #fffdf8 0%, #fbf6ec 55%, #f4ebdc 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -2px 6px rgba(160, 130, 100, 0.2),
+    inset 2px 0 6px rgba(160, 130, 100, 0.08),
+    0 10px 30px rgba(61, 44, 46, 0.16);
+}
+
+/* Мелкое зерно бумаги — SVG-шум, едва заметный. */
+.scene__paper-grain {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+  opacity: 0.055;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* Статичный мягкий блик на бумаге (периодический sheen — только у сердца). */
+.scene__paper-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    118deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.4) 44%,
+    rgba(255, 255, 255, 0) 56%
+  );
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* Тень от сердца на бумаге. */
+.scene__heart-shadow {
+  position: absolute;
+  left: 50%;
+  top: 63%;
+  width: 44%;
+  height: 12%;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse closest-side,
+    rgba(61, 44, 46, 0.3),
+    rgba(61, 44, 46, 0) 75%
+  );
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+/* --- Объёмное сердце ------------------------------------------------------ */
+
+.scene-heart {
+  --heart-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E");
+  position: relative;
+  width: 54%;
+  max-width: 190px;
+  aspect-ratio: 1;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  /* Сердцебиение: два близких импульса, затем пауза (заполнено ниже). */
+  animation: heart-beat 1.7s ease-in-out infinite;
+}
+
+.scene-heart:disabled {
+  cursor: default;
+}
+
+.scene-heart:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 6px;
+  border-radius: 50%;
+}
+
+/* Объёмная поверхность: базовый градиент + внутренняя глубина + блик. */
+.scene-heart__shape {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background:
+    radial-gradient(
+      60% 48% at 31% 23%,
+      rgba(255, 255, 255, 0.55),
+      rgba(255, 255, 255, 0) 70%
+    ),
+    radial-gradient(
+      130% 95% at 50% 116%,
+      rgba(90, 10, 35, 0.5),
+      rgba(90, 10, 35, 0) 58%
+    ),
+    radial-gradient(
+      circle at 34% 28%,
+      #ff8fa3 0%,
+      #f0688a 30%,
+      #e0526d 54%,
+      #bd3d58 80%,
+      #9c2f49 100%
+    );
+  -webkit-mask: var(--heart-mask) center / contain no-repeat;
+  mask: var(--heart-mask) center / contain no-repeat;
+  filter: drop-shadow(0 14px 24px rgba(184, 58, 85, 0.42));
+}
+
+/* Периодический блик, проходящий по поверхности сердца. */
+.scene-heart__sheen {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 60%
+  );
+  background-size: 260% 100%;
+  -webkit-mask: var(--heart-mask) center / contain no-repeat;
+  mask: var(--heart-mask) center / contain no-repeat;
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: heart-sheen 5.4s ease-in-out 2.6s infinite;
+  pointer-events: none;
+}
+
+/*
+ * Сердцебиение: импульс -> микро-спад -> второй импульс -> пауза.
+ * Увеличение деликатное (максимум ~9%).
+ */
+@keyframes heart-beat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  10% {
+    transform: scale(1.075);
+  }
+  20% {
+    transform: scale(1.015);
+  }
+  30% {
+    transform: scale(1.09);
+  }
+  46% {
+    transform: scale(1);
+  }
+}
+
+@keyframes heart-sheen {
+  0%,
+  55% {
+    opacity: 0;
+    background-position: 130% 0;
+  }
+  62% {
+    opacity: 0.55;
+  }
+  78% {
+    opacity: 0;
+    background-position: -40% 0;
+  }
+  100% {
+    opacity: 0;
+    background-position: -40% 0;
+  }
+}
+
+/* --- Canvas со шлейфом ----------------------------------------------------- */
+
+.heart-trail {
+  /* fixed относительно вьюпорта (canvas — не потомок .scene).
+     Отрицательный слой: шлейф позади письма и всей сцены. */
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* --- Адаптация -------------------------------------------------------------- */
+
+@media (max-width: 360px) {
+  .scene__paper {
+    width: min(78vw, 260px);
+  }
+}
+
+/* Уважаем настройку «уменьшить движение»: письмо появляется простым
+   проявлением, без полёта, парения, пульсации и шлейфа. */
+@media (prefers-reduced-motion: reduce) {
+  .scene__flight {
+    animation: none;
+  }
+
+  .scene__float,
+  .scene-heart,
+  .scene-heart__sheen,
+  .scene__shadow {
+    animation: none;
+  }
+
+  .scene__shadow {
+    opacity: 0.9;
+  }
+
+  .heart-trail {
+    display: none;
+  }
+}

@@ -1,7 +1,7 @@
 import type { LetterFlowState } from '../../state/letterFlow';
 import { letterContent } from '../../content/letterContent';
 import { appConfig } from '../../config/appConfig';
-import { Envelope } from '../Envelope/Envelope';
+import { LetterScene } from '../LetterScene/LetterScene';
 import { Letter } from '../Letter/Letter';
 import { AnimationLayer } from '../AnimationLayer/AnimationLayer';
 import './LetterScreen.css';
@@ -16,11 +16,11 @@ interface LetterScreenProps {
 }
 
 /**
- * Главный экран: центральная область для конверта/письма,
- * подсказка и зарезервированный слой анимаций.
+ * Главный экран: кинематографичная сцена с письмом (idle/opening),
+ * открытый текст письма (opened) и зарезервированный слой анимаций.
  */
 export function LetterScreen({ state, greetingName, isTelegram, onOpen }: LetterScreenProps) {
-  const showEnvelope = state === 'idle' || state === 'opening';
+  const showScene = state === 'idle' || state === 'opening';
   const showHint = state === 'idle';
 
   return (
@@ -31,7 +31,7 @@ export function LetterScreen({ state, greetingName, isTelegram, onOpen }: Letter
       </header>
 
       <div className="screen__stage" data-flow-state={state}>
-        {showEnvelope ? <Envelope state={state} onOpen={onOpen} /> : null}
+        {showScene ? <LetterScene state={state} onOpen={onOpen} /> : null}
         {state === 'opened' ? <Letter content={letterContent} /> : null}
       </div>
 

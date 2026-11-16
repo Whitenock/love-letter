@@ -11,6 +11,16 @@ export const appConfig = {
      */
     openingDurationMs: 1200,
   },
+  scene: {
+    /**
+     * Длительность полёта письма из глубины экрана.
+     * Должна совпадать с длительностью CSS-анимации scene-flight
+     * (LetterScene.css) — используется для синхронизации шлейфа частиц.
+     */
+    flightDurationMs: 2800,
+    /** Максимальное число живых частиц шлейфа (защита от перегрузки DOM-канваса). */
+    trailMaxParticles: 130,
+  },
   debug: {
     /** Показывать служебную плашку в режиме разработки. */
     showDevelopmentBadge: import.meta.env.DEV,
