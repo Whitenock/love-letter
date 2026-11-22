@@ -478,7 +478,7 @@
 .heart-field {
   position: absolute;
   inset: 0;
-  z-index: 4;
+  z-index: 2;
   width: 100%;
   height: 100%;
   pointer-events: none;
@@ -947,6 +947,57 @@
   50% {
     opacity: 0;
   }
+}
+
+/* Обёртка текста и рисунков: рисунки абсолютно позиционированы внутри,
+   поэтому прокручиваются вместе с текстом. */
+.scene__letter-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Рисунки на листе: маленькие, за текстом, в хаотичном порядке,
+   прикреплены к бумаге (не перекрывают текст). */
+.scene__letter-drawing {
+  position: absolute;
+  width: clamp(72px, 26vw, 110px);
+  height: auto;
+  opacity: 0.85;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  mix-blend-mode: multiply;
+  filter: drop-shadow(0 2px 4px rgba(61, 44, 46, 0.18));
+}
+
+.scene__letter-drawing--1 {
+  top: 6%;
+  left: 4%;
+  transform: rotate(-11deg);
+}
+
+.scene__letter-drawing--2 {
+  top: 18%;
+  right: 3%;
+  transform: rotate(7deg);
+}
+
+.scene__letter-drawing--3 {
+  top: 52%;
+  left: 6%;
+  transform: rotate(-6deg);
+}
+
+.scene__letter-drawing--4 {
+  top: 70%;
+  right: 4%;
+  transform: rotate(12deg);
+}
+
+/* Текст поверх рисунков. */
+.scene__letter-text {
+  position: relative;
+  z-index: 1;
 }
 
 /* --- Подпись и P.S. по правому краю ------------------------------------ */

@@ -26,6 +26,7 @@ const CLOSING_MARKER = 'С любовью';
  * Длинное письмо прокручивается свайпом вверх/вниз внутри карточки письма
  * (overflow на .scene__letter-face); при печати карточка автопрокручивается
  * к последнему напечатанному символу, если пользователь не прокрутил вручную.
+ * Рисунки лежат за текстом (z-index ниже) и прокручиваются вместе с ним.
  */
 export function LetterSheet({ openAt }: LetterSheetProps) {
   const [typedLength, setTypedLength] = useState(0);
@@ -40,11 +41,6 @@ export function LetterSheet({ openAt }: LetterSheetProps) {
       return;
     }
     playSoundCue('text-scratch');
-    // Компонент монтируется в момент старта открытия, поэтому задержка
-    // равна полному typingStartMs от начала открытия. Без флага-защиты:
-    // в StrictMode первый прогон эффекта ставит таймер, cleanup его снимает,
-    // второй прогон запускает заново — флаг заблокировал бы рестарт и печать
-    // никогда не началась бы.
     const delay = window.setTimeout(() => {
       typingTimer.current = window.setInterval(() => {
         setTypedLength((current) => {
@@ -69,8 +65,6 @@ export function LetterSheet({ openAt }: LetterSheetProps) {
     };
   }, [openAt, fullText.length]);
 
-  // Автопрокрутка к напечатанному тексту (прилипание к низу), если
-  // пользователь сам не прокрутил письмо вверх.
   useEffect(() => {
     const el = faceRef.current;
     if (!el) return;
@@ -82,7 +76,6 @@ export function LetterSheet({ openAt }: LetterSheetProps) {
 
   const typed = fullText.slice(0, typedLength);
 
-  // До начала закрытия — весь напечатанный текст в одном абзаце.
   const beforeClosing =
     closingIndex === -1 || typedLength <= closingIndex
       ? typed
@@ -96,37 +89,59 @@ export function LetterSheet({ openAt }: LetterSheetProps) {
   return (
     <div className="scene__letter-fly" aria-live="polite">
       <div className="scene__letter-sheet">
-        {/* Сложенные полосы — визуально «помятое» письмо в начале полёта.
-            Раскладываются последовательно (CSS-анимации с задержками). */}
         <span className="scene__letter-band scene__letter-band--top" aria-hidden="true" />
         <span className="scene__letter-band scene__letter-band--middle" aria-hidden="true" />
         <span className="scene__letter-band scene__letter-band--bottom" aria-hidden="true" />
         <span className="scene__letter-crease" aria-hidden="true" />
-        {/* Чистая лицевая сторона с текстом: проявляется, когда сгибы расправлены.
-            Прокручивается свайпом, если текст длиннее карточки. */}
         <div className="scene__letter-face" ref={faceRef}>
-          <p className="scene__letter-text">
-            {beforeClosing}
-            {closingIndex === -1 || typedLength <= closingIndex ? (
-              <span
-                className="scene__letter-caret"
-                aria-hidden="true"
-                style={{ opacity: typedLength < fullText.length ? 1 : 0 }}
-              />
-            ) : null}
-          </p>
-          {closingTyped ? (
-            <div className="scene__letter-closing">
-              <p className="scene__letter-text scene__letter-text--closing">
-                {closingTyped}
+          <div className="scene__letter-content">
+            <img
+              className="scene__letter-drawing scene__letter-drawing--1"
+              src="/letter-drawings/draw1_tl.jpg"
+              alt=""
+              aria-hidden="true"
+            />
+            <img
+              className="scene__letter-drawing scene__letter-drawing--2"
+              src="/letter-drawings/draw2_tr.jpg"
+              alt=""
+              aria-hidden="true"
+            />
+            <img
+              className="scene__letter-drawing scene__letter-drawing--3"
+              src="/letter-drawings/draw3_bl.jpg"
+              alt=""
+              aria-hidden="true"
+            />
+            <img
+              className="scene__letter-drawing scene__letter-drawing--4"
+              src="/letter-drawings/draw4_br.jpg"
+              alt=""
+              aria-hidden="true"
+            />
+            <p className="scene__letter-text">
+              {beforeClosing}
+              {closingIndex === -1 || typedLength <= closingIndex ? (
                 <span
                   className="scene__letter-caret"
                   aria-hidden="true"
                   style={{ opacity: typedLength < fullText.length ? 1 : 0 }}
                 />
-              </p>
-            </div>
-          ) : null}
+              ) : null}
+            </p>
+            {closingTyped ? (
+              <div className="scene__letter-closing">
+                <p className="scene__letter-text scene__letter-text--closing">
+                  {closingTyped}
+                  <span
+                    className="scene__letter-caret"
+                    aria-hidden="true"
+                    style={{ opacity: typedLength < fullText.length ? 1 : 0 }}
+                  />
+                </p>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>
