@@ -141,12 +141,6 @@ export function LetterSheet({ openAt }: LetterSheetProps) {
               alt=""
               aria-hidden="true"
             />
-            <img
-              className="scene__letter-drawing scene__letter-drawing--5"
-              src="./letter-drawings/draw5.jpg"
-              alt=""
-              aria-hidden="true"
-            />
             <div className="scene__letter-text-wrap" ref={textWrapRef}>
               <p className="scene__letter-text">
                 {beforeClosing}
@@ -160,6 +154,12 @@ export function LetterSheet({ openAt }: LetterSheetProps) {
               </p>
               {closingTyped ? (
                 <div className="scene__letter-closing">
+                <img
+                  className="scene__letter-drawing scene__letter-drawing--5"
+                  src="./letter-drawings/draw5.jpg"
+                  alt=""
+                  aria-hidden="true"
+                />
                   <p className="scene__letter-text scene__letter-text--closing">
                     {closingTyped}
                     <span
