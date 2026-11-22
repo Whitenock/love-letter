@@ -39,18 +39,28 @@ export const musicTracks: MusicTrack[] = [
     artist: 'MorgenShtern',
     src: withBase('music/morgenshtern-cvetok.mp3'),
   },
-
-  // ── Демо-треки для проверки плеера. Можно удалить, добавив свои песни. ──
   {
-    id: 'demo-night-serenade',
-    title: 'Ночная серенада',
-    artist: 'Демо',
-    src: withBase('music/demo/night-serenade.wav'),
+    id: 'marselle-mimo',
+    title: 'Mimo',
+    artist: 'Marselle',
+    src: withBase('music/marselle-mimo.mp3'),
   },
   {
-    id: 'demo-dawn',
-    title: 'Рассвет',
-    artist: 'Демо',
-    src: withBase('music/demo/dawn.wav'),
+    id: 'kanye-west-father-stretch-my-hands-pt-1',
+    title: 'Father Stretch My Hands Pt. 1',
+    artist: 'Kanye West',
+    src: withBase('music/kanye-west-father-stretch-my-hands-pt-1.mp3'),
+  },
+  {
+    id: 'brent-faiyaz-soon-as-i-get-home-interlude',
+    title: 'Soon As I Get Home Interlude',
+    artist: 'Brent Faiyaz',
+    src: withBase('music/brent-faiyaz-soon-as-i-get-home-interlude.mp3'),
+  },
+  {
+    id: 'sonder-one-night-only',
+    title: 'One Night Only',
+    artist: 'SONDER',
+    src: withBase('music/sonder-one-night-only.mp3'),
   },
 ];
