@@ -883,6 +883,14 @@
     inset 0 -2px 8px rgba(122, 90, 46, 0.14);
   opacity: 0;
   animation: letter-face-in 550ms ease 1080ms both;
+  /* Длинное письмо прокручивается свайпом вверх/вниз внутри карточки. */
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  pointer-events: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(122, 90, 46, 0.35) transparent;
 }
 
 @keyframes letter-face-in {
@@ -939,6 +947,28 @@
   50% {
     opacity: 0;
   }
+}
+
+/* --- Подпись и P.S. по правому краю ------------------------------------ */
+
+.scene__letter-closing {
+  text-align: right;
+  margin-top: 0.6rem;
+}
+
+.scene__letter-text--closing {
+  padding-top: 0;
+}
+
+/* --- Полоса прокрутки внутри карточки письма --------------------------- */
+
+.scene__letter-face::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scene__letter-face::-webkit-scrollbar-thumb {
+  background: rgba(122, 90, 46, 0.35);
+  border-radius: 3px;
 }
 
 /* --- Сцена 2: уменьшенное движение ---------------------------------------- */
