@@ -33,11 +33,8 @@ const BURST_PALETTE = [
   'rgba(255, 253, 247, 0.92)',
 ];
 
-/** Ширина колонны карты высот кучи (px). Шире колонна — положе куча, меньше «башен». */
-const PILE_COLUMN_WIDTH = 20;
-
-/** Максимальная «ступенька» высоты между соседними колоннами (px). */
-const PILE_MAX_STEP = 15;
+/** Ширина колонны карты высот кучи (px). */
+const PILE_COLUMN_WIDTH = 14;
 
 function randomBetween(min: number, max: number): number {
   return min + Math.random() * (max - min);
@@ -100,51 +97,8 @@ export function HeartField({ burstAt, envelopeRef }: HeartFieldProps) {
     const particles: FieldParticle[] = [];
     // Карта высот кучи: колонны от левого края экрана.
     let pileColumns: number[] = [];
-    /** Куча менялась (ложится/убирается сердце) — нужна релаксация. */
-    let pileDirty = false;
 
     const floorY = (): number => height - 26;
-
-    /**
-     * Релаксация карты высот: «лишняя» высота колонны перетекает к более
-     * низкой соседке, пока перепады не станут меньше PILE_MAX_STEP.
-     * Куча расползается в пологую горку вместо вертикальных башен.
-     */
-    const relaxPile = (maxColumn: number): boolean => {
-      let changed = false;
-      for (let pass = 0; pass < 2; pass += 1) {
-        for (let i = 0; i < maxColumn; i += 1) {
-          const h = pileColumns[i];
-          if (h === undefined) {
-            continue;
-          }
-          const l = i > 0 ? (pileColumns[i - 1] ?? 0) : h;
-          const r = i < maxColumn - 1 ? (pileColumns[i + 1] ?? 0) : h;
-          const lowerH = Math.min(l, r);
-          if (h - lowerH > PILE_MAX_STEP) {
-            const lower = l <= r ? i - 1 : i + 1;
-            const moved = (h - lowerH - PILE_MAX_STEP) * 0.5;
-            pileColumns[i] = h - moved;
-            pileColumns[lower] = (pileColumns[lower] ?? 0) + moved;
-            changed = true;
-          }
-        }
-      }
-      return changed;
-    };
-
-    /** Пересаживает осевшие сердца на актуальную поверхность кучи. */
-    const resettleSettled = (maxColumn: number): void => {
-      const floor = floorY();
-      for (let i = 0; i < particles.length; i += 1) {
-        const p = particles[i];
-        if (!p.settled) {
-          continue;
-        }
-        const col = Math.max(0, Math.min(maxColumn - 1, Math.floor(p.x / PILE_COLUMN_WIDTH)));
-        p.y = floor - (pileColumns[col] ?? 0) - p.size * 0.28;
-      }
-    };
 
     const spawnBurstParticle = (mouthX: number, mouthY: number): void => {
       if (particles.length >= cfg.fieldMaxParticles) {
@@ -200,7 +154,6 @@ export function HeartField({ burstAt, envelopeRef }: HeartFieldProps) {
           pileColumns[col] = Math.max(0, (pileColumns[col] ?? 0) - p.size * 0.34);
           p.settled = false;
           p.y -= 2;
-          pileDirty = true;
         }
         p.vx += nx * push;
         p.vy += ny * push - push * 0.35; // лёгкая вертикальная добавка — сердечка «подпрыгивает»
@@ -290,16 +243,6 @@ export function HeartField({ burstAt, envelopeRef }: HeartFieldProps) {
         applyTouchForce(pointerX, pointerY, pointerSpeed, maxColumn);
       }
 
-      // Куча менялась — расползаем пики в пологую горку и пересаживаем
-      // осевшие сердца на новую поверхность.
-      if (pileDirty) {
-        const changed = relaxPile(maxColumn);
-        resettleSettled(maxColumn);
-        if (!changed) {
-          pileDirty = false;
-        }
-      }
-
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.save();
       context.scale(dpr, dpr);
@@ -340,27 +283,20 @@ export function HeartField({ burstAt, envelopeRef }: HeartFieldProps) {
         const column = Math.max(0, Math.min(maxColumn - 1, Math.floor(p.x / PILE_COLUMN_WIDTH)));
         const pileTop = floor - (pileColumns[column] ?? 0);
         if (p.y >= pileTop) {
-          p.y = pileTop;
-          // Наклон поверхности: >0 — ниже справа, сердце скатывается вправо.
-          const leftH = pileColumns[column - 1] ?? 0;
-          const rightH = pileColumns[column + 1] ?? 0;
-          const slope = Math.max(-1, Math.min(1, (leftH - rightH) / PILE_COLUMN_WIDTH));
-          if (Math.abs(p.vy) > 100) {
-            // Отскок с потерей энергии и лёгким скольжением по склону.
-            p.vy *= -randomBetween(0.2, 0.32);
-            p.vx = p.vx * 0.6 + slope * randomBetween(30, 70);
+          if (Math.abs(p.vy) > 140) {
+            // Сильный удар — небольшой отскок и скольжение к склону.
+            p.y = pileTop;
+            p.vy *= -0.28;
+            p.vx *= 0.6;
             p.vr *= 0.5;
-          } else if (Math.abs(p.vy) > 20 || Math.abs(p.vx) > 26) {
-            // Катится по поверхности, плавно теряя скорость, —
-            // вместо мгновенной заморозки на месте падения.
-            p.vy = 0;
-            p.vx = p.vx * Math.pow(0.25, dt) + slope * 520 * dt;
-            p.vr = p.vr * Math.pow(0.2, dt) + slope * 3 * dt;
           } else {
-            // Почти остановилось — ложится в кучу.
+            // Ложится в кучу: на текущую высоту, чуть сползая к склону.
             p.settled = true;
-            if (Math.random() < 0.4) {
-              p.x += randomBetween(-3, 3);
+            const leftH = pileColumns[column - 1] ?? 0;
+            const rightH = pileColumns[column + 1] ?? 0;
+            const neighborMin = Math.min(leftH, rightH);
+            if ((leftH || rightH) && pileColumns[column] > neighborMin + 6 && Math.random() < 0.5) {
+              p.x += (rightH < leftH ? 1 : -1) * randomBetween(4, 10);
             }
             const finalColumn = Math.max(0, Math.min(maxColumn - 1, Math.floor(p.x / PILE_COLUMN_WIDTH)));
             p.y = floor - (pileColumns[finalColumn] ?? 0) - p.size * 0.28;
@@ -369,7 +305,6 @@ export function HeartField({ burstAt, envelopeRef }: HeartFieldProps) {
             p.vx = 0;
             p.vr = 0;
             p.rot *= 0.4;
-            pileDirty = true;
           }
         }
 

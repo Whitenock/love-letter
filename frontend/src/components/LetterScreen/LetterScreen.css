@@ -10,6 +10,16 @@
 
 .screen__header {
   text-align: center;
+  /* Резервируем место справа под плавающий плеер (top-right), чтобы
+     капсула не перекрывала заголовок «Письмо для тебя». */
+  padding-right: calc(env(safe-area-inset-right, 0px) + 96px);
+}
+
+@media (min-width: 521px) {
+  /* На широких экранах плеер показывает название трека — капсула шире. */
+  .screen__header {
+    padding-right: calc(env(safe-area-inset-right, 0px) + 280px);
+  }
 }
 
 .screen__greeting {
