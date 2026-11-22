@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import './styles/variables.css';
 import './styles/global.css';
+import './services/soundEngine';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
