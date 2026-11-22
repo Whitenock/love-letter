@@ -994,6 +994,12 @@
   transform: rotate(14deg);
 }
 
+.scene__letter-drawing--5 {
+  top: 0.5rem;
+  left: 0.5rem;
+  transform: rotate(-10deg);
+}
+
 /* Текст поверх рисунков. */
 .scene__letter-text {
   position: relative;
