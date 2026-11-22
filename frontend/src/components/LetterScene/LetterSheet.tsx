@@ -97,25 +97,31 @@ export function LetterSheet({ openAt }: LetterSheetProps) {
           <div className="scene__letter-content">
             <img
               className="scene__letter-drawing scene__letter-drawing--1"
-              src="/letter-drawings/draw1_tl.jpg"
+              src="./letter-drawings/draw1_tl.jpg"
               alt=""
               aria-hidden="true"
             />
             <img
               className="scene__letter-drawing scene__letter-drawing--2"
-              src="/letter-drawings/draw2_tr.jpg"
+              src="./letter-drawings/draw2_tr.jpg"
               alt=""
               aria-hidden="true"
             />
             <img
               className="scene__letter-drawing scene__letter-drawing--3"
-              src="/letter-drawings/draw3_bl.jpg"
+              src="./letter-drawings/draw3_bl.jpg"
               alt=""
               aria-hidden="true"
             />
             <img
               className="scene__letter-drawing scene__letter-drawing--4"
-              src="/letter-drawings/draw4_br.jpg"
+              src="./letter-drawings/draw4_br.jpg"
+              alt=""
+              aria-hidden="true"
+            />
+            <img
+              className="scene__letter-drawing scene__letter-drawing--5"
+              src="./letter-drawings/draw5.jpg"
               alt=""
               aria-hidden="true"
             />

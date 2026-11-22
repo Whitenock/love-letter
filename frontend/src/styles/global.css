@@ -17,7 +17,8 @@ html {
 body {
   /* 100dvh — корректная высота в мобильных браузерах; переменная
      --app-viewport-height переопределяется из Telegram viewport. */
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
@@ -33,7 +34,8 @@ body {
 }
 
 #root {
-  min-height: 100dvh;
+  height: 100%;
+  overflow: hidden;
 }
 
 button {

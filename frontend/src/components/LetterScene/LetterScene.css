@@ -960,9 +960,9 @@
    прикреплены к бумаге (не перекрывают текст). */
 .scene__letter-drawing {
   position: absolute;
-  width: clamp(72px, 26vw, 110px);
+  width: clamp(56px, 20vw, 84px);
   height: auto;
-  opacity: 0.85;
+  opacity: 0.8;
   pointer-events: none;
   user-select: none;
   z-index: 0;
@@ -971,27 +971,33 @@
 }
 
 .scene__letter-drawing--1 {
-  top: 6%;
-  left: 4%;
-  transform: rotate(-11deg);
+  top: 4%;
+  left: 3%;
+  transform: rotate(-13deg);
 }
 
 .scene__letter-drawing--2 {
-  top: 18%;
-  right: 3%;
-  transform: rotate(7deg);
+  top: 14%;
+  right: 4%;
+  transform: rotate(9deg);
 }
 
 .scene__letter-drawing--3 {
-  top: 52%;
-  left: 6%;
-  transform: rotate(-6deg);
+  top: 38%;
+  left: 5%;
+  transform: rotate(-7deg);
 }
 
 .scene__letter-drawing--4 {
-  top: 70%;
-  right: 4%;
-  transform: rotate(12deg);
+  top: 58%;
+  right: 3%;
+  transform: rotate(14deg);
+}
+
+.scene__letter-drawing--5 {
+  top: 78%;
+  left: 6%;
+  transform: rotate(-4deg);
 }
 
 /* Текст поверх рисунков. */
