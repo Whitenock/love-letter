@@ -4,6 +4,7 @@ import type { LetterFlowState } from '../../state/letterFlow';
 import { appConfig } from '../../config/appConfig';
 import { notifyHapticTap } from '../../telegram/telegramWebApp';
 import { playSoundCue } from '../../services/soundCues';
+import { stopHoldSound } from '../../services/soundEngine';
 import { HeartTrail } from './HeartTrail';
 import { HeartField } from './HeartField';
 import { LetterSheet } from './LetterSheet';
@@ -148,6 +149,7 @@ export function LetterScene({ state, onOpen }: LetterSceneProps) {
         // Заряд больше не нужен: гасим свечение/лучи/кольцо, чтобы они
         // не «зависли» на максимуме после начала открытия.
         decayCharge();
+       stopHoldSound();
         window.setTimeout(() => {
           onOpen();
         }, appConfig.scene2.burstPulseMs);
@@ -182,6 +184,7 @@ export function LetterScene({ state, onOpen }: LetterSceneProps) {
     sceneRef.current?.classList.remove('scene--charging');
     cancelAnimationFrame(rafRef.current);
     holdStartRef.current = null;
+    stopHoldSound();
     animateRelease();
   }, [animateRelease]);
 
