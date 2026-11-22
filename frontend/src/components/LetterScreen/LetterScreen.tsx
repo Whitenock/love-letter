@@ -1,11 +1,9 @@
 import type { LetterFlowState } from '../../state/letterFlow';
-import { useState } from 'react';
 import { letterContent } from '../../content/letterContent';
 import { appConfig } from '../../config/appConfig';
 import { LetterScene } from '../LetterScene/LetterScene';
 import { AnimationLayer } from '../AnimationLayer/AnimationLayer';
 import { MusicPlayer } from '../MusicPlayer/MusicPlayer';
-import { DrawingCanvas } from '../DrawingCanvas/DrawingCanvas';
 import './LetterScreen.css';
 
 interface LetterScreenProps {
@@ -23,7 +21,6 @@ interface LetterScreenProps {
  */
 export function LetterScreen({ state, greetingName, isTelegram, onOpen }: LetterScreenProps) {
   const showHint = state === 'idle';
-  const [drawingOpen, setDrawingOpen] = useState(false);
 
   return (
     <main className="screen">
@@ -50,16 +47,6 @@ export function LetterScreen({ state, greetingName, isTelegram, onOpen }: Letter
 
       <AnimationLayer state={state} />
       <MusicPlayer />
-      <button
-        type="button"
-        className="drawing-fab"
-        onClick={() => setDrawingOpen(true)}
-        aria-label="Открыть общий холст для рисования"
-        title="Рисовать вместе"
-      >
-        🎨
-      </button>
-      <DrawingCanvas open={drawingOpen} onClose={() => setDrawingOpen(false)} />
     </main>
   );
 }

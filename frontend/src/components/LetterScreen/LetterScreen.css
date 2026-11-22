@@ -62,22 +62,3 @@
   text-align: center;
   font-weight: 500;
 }
-
-.drawing-fab {
-  position: fixed;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
-  right: calc(env(safe-area-inset-right, 0px) + 16px);
-  z-index: 50;
-  width: 48px;
-  height: 48px;
-  border: none;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #e05a76, #c7435f);
-  color: #fff;
-  font-size: 22px;
-  box-shadow: 0 6px 16px rgba(224, 82, 109, 0.4);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
