@@ -971,31 +971,31 @@
 }
 
 .scene__letter-drawing--1 {
-  top: 4%;
+  top: 30em;
   left: 3%;
   transform: rotate(-13deg);
 }
 
 .scene__letter-drawing--2 {
-  top: 14%;
+  top: 90em;
   right: 4%;
   transform: rotate(9deg);
 }
 
 .scene__letter-drawing--3 {
-  top: 38%;
+  top: 160em;
   left: 5%;
   transform: rotate(-7deg);
 }
 
 .scene__letter-drawing--4 {
-  top: 58%;
+  top: 230em;
   right: 3%;
   transform: rotate(14deg);
 }
 
 .scene__letter-drawing--5 {
-  top: 78%;
+  top: 300em;
   left: 6%;
   transform: rotate(-4deg);
 }
