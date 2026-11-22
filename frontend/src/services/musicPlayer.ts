@@ -56,6 +56,12 @@ function clamp01(value: number): number {
 class MusicPlayerService {
   private readonly audio: HTMLAudioElement;
 
+  /** Web Audio: позволяет регулировать громкость на iOS, где
+   *  HTMLAudioElement.volume доступен только для чтения. */
+  private audioContext: AudioContext | null = null;
+  private gainNode: GainNode | null = null;
+  private useGain = false;
+
   private readonly listeners = new Set<Listener>();
 
   private state: MusicPlayerState = {
@@ -73,14 +79,49 @@ class MusicPlayerService {
   constructor() {
     this.audio = new Audio();
     this.audio.preload = 'auto';
-    this.audio.volume = this.state.volume;
+    this.audio.crossOrigin = 'anonymous';
+    this.audio.volume = 1; // громкость управляется через GainNode (см. ниже)
     this.audio.muted = this.state.muted;
+    this.setupAudioGraph();
     this.bindAudioEvents();
     this.setupMediaSession();
     // Загружаем metadata первого трека сразу, чтобы длительность была видна
     // до первого запуска (воспроизведение при этом не начинается).
     if (this.state.currentIndex >= 0) {
       this.loadTrack(this.state.currentIndex, { keepPlaying: false });
+    }
+  }
+
+  /** Строит цепочку Web Audio: source -> gain -> destination.
+   *  На платформах без Web Audio остаёмся на прямом audio.volume. */
+  private setupAudioGraph(): void {
+    try {
+      const Ctx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const source = ctx.createMediaElementSource(this.audio);
+      const gain = ctx.createGain();
+      gain.gain.value = this.state.volume;
+      source.connect(gain);
+      gain.connect(ctx.destination);
+      this.audioContext = ctx;
+      this.gainNode = gain;
+      this.useGain = true;
+    } catch (error) {
+      // Не удалось создать граф — откатываемся к прямому управлению громкостью.
+      this.useGain = false;
+      this.audio.volume = this.state.volume;
+      console.warn('Web Audio недоступен, громкость через audio.volume', error);
+    }
+  }
+
+  private resumeAudioContext(): void {
+    if (this.audioContext && this.audioContext.state === 'suspended') {
+      this.audioContext.resume().catch(() => {
+        /* Игнорируем: контекст возобновится при следующем жесте. */
+      });
     }
   }
 
@@ -113,6 +154,7 @@ class MusicPlayerService {
       this.state = { ...this.state, error: null };
       this.emit();
     }
+    this.resumeAudioContext();
     this.audio
       .play()
       .then(() => {
@@ -172,7 +214,15 @@ class MusicPlayerService {
 
   setVolume(volume: number): void {
     const next = clamp01(volume);
-    this.audio.volume = next;
+    if (this.useGain && this.gainNode) {
+      // Плавное изменение, чтобы не было щелчков.
+      const now = this.audioContext?.currentTime ?? 0;
+      this.gainNode.gain.cancelScheduledValues(now);
+      this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, now);
+      this.gainNode.gain.linearRampToValueAtTime(next, now + 0.05);
+    } else {
+      this.audio.volume = next;
+    }
     // Громкость > 0 снимает mute — ожидаемое поведение регулятора.
     const muted = next === 0 ? this.state.muted : false;
     this.audio.muted = muted;
