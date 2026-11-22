@@ -34,7 +34,7 @@ const BURST_PALETTE = [
 ];
 
 /** Ширина колонны карты высот кучи (px). */
-const PILE_COLUMN_WIDTH = 14;
+const PILE_COLUMN_WIDTH = 20;
 
 function randomBetween(min: number, max: number): number {
   return min + Math.random() * (max - min);
@@ -284,23 +284,23 @@ export function HeartField({ burstAt, envelopeRef }: HeartFieldProps) {
         const pileTop = floor - (pileColumns[column] ?? 0);
         if (p.y >= pileTop) {
           if (Math.abs(p.vy) > 140) {
-            // Сильный удар — небольшой отскок и скольжение к склону.
+            // Сильный удар — отскок и скольжение.
             p.y = pileTop;
-            p.vy *= -0.28;
-            p.vx *= 0.6;
+            p.vy *= -0.35;
+            p.vx *= 0.75;
             p.vr *= 0.5;
           } else {
-            // Ложится в кучу: на текущую высоту, чуть сползая к склону.
+            // Ложится в кучу: на текущую высоту, скользя к склону.
             p.settled = true;
             const leftH = pileColumns[column - 1] ?? 0;
             const rightH = pileColumns[column + 1] ?? 0;
             const neighborMin = Math.min(leftH, rightH);
-            if ((leftH || rightH) && pileColumns[column] > neighborMin + 6 && Math.random() < 0.5) {
-              p.x += (rightH < leftH ? 1 : -1) * randomBetween(4, 10);
+            if ((leftH || rightH) && pileColumns[column] > neighborMin + 8 && Math.random() < 0.3) {
+              p.x += (rightH < leftH ? 1 : -1) * randomBetween(2, 6);
             }
             const finalColumn = Math.max(0, Math.min(maxColumn - 1, Math.floor(p.x / PILE_COLUMN_WIDTH)));
             p.y = floor - (pileColumns[finalColumn] ?? 0) - p.size * 0.28;
-            pileColumns[finalColumn] = (pileColumns[finalColumn] ?? 0) + p.size * 0.34;
+            pileColumns[finalColumn] = (pileColumns[finalColumn] ?? 0) + p.size * 0.25;
             p.vy = 0;
             p.vx = 0;
             p.vr = 0;
