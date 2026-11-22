@@ -32,6 +32,7 @@ export function LetterSheet({ openAt }: LetterSheetProps) {
   const [typedLength, setTypedLength] = useState(0);
   const typingTimer = useRef<number | null>(null);
   const faceRef = useRef<HTMLDivElement | null>(null);
+  const textWrapRef = useRef<HTMLDivElement | null>(null);
 
   const fullText = letterContent.sceneText;
   const closingIndex = fullText.indexOf(CLOSING_MARKER);
@@ -68,11 +69,32 @@ export function LetterSheet({ openAt }: LetterSheetProps) {
   useEffect(() => {
     const el = faceRef.current;
     if (!el) return;
-    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+    const textWrap = textWrapRef.current;
+    if (!textWrap) return;
+    const textHeight = textWrap.offsetHeight;
+    const maxScroll = Math.max(0, textHeight - el.clientHeight);
+    const nearBottom = el.scrollTop >= maxScroll - 48;
     if (nearBottom) {
-      el.scrollTop = el.scrollHeight;
+      el.scrollTop = maxScroll;
     }
   }, [typedLength]);
+
+  // Ограничение ручной прокрутки: нельзя прокрутить ниже напечатанного текста.
+  useEffect(() => {
+    const el = faceRef.current;
+    if (!el) return;
+    const clamp = () => {
+      const textWrap = textWrapRef.current;
+      if (!textWrap) return;
+      const textHeight = textWrap.offsetHeight;
+      const maxScroll = Math.max(0, textHeight - el.clientHeight);
+      if (el.scrollTop > maxScroll) {
+        el.scrollTop = maxScroll;
+      }
+    };
+    el.addEventListener('scroll', clamp);
+    return () => el.removeEventListener('scroll', clamp);
+  }, []);
 
   const typed = fullText.slice(0, typedLength);
 
@@ -125,28 +147,30 @@ export function LetterSheet({ openAt }: LetterSheetProps) {
               alt=""
               aria-hidden="true"
             />
-            <p className="scene__letter-text">
-              {beforeClosing}
-              {closingIndex === -1 || typedLength <= closingIndex ? (
-                <span
-                  className="scene__letter-caret"
-                  aria-hidden="true"
-                  style={{ opacity: typedLength < fullText.length ? 1 : 0 }}
-                />
-              ) : null}
-            </p>
-            {closingTyped ? (
-              <div className="scene__letter-closing">
-                <p className="scene__letter-text scene__letter-text--closing">
-                  {closingTyped}
+            <div className="scene__letter-text-wrap" ref={textWrapRef}>
+              <p className="scene__letter-text">
+                {beforeClosing}
+                {closingIndex === -1 || typedLength <= closingIndex ? (
                   <span
                     className="scene__letter-caret"
                     aria-hidden="true"
                     style={{ opacity: typedLength < fullText.length ? 1 : 0 }}
                   />
-                </p>
-              </div>
-            ) : null}
+                ) : null}
+              </p>
+              {closingTyped ? (
+                <div className="scene__letter-closing">
+                  <p className="scene__letter-text scene__letter-text--closing">
+                    {closingTyped}
+                    <span
+                      className="scene__letter-caret"
+                      aria-hidden="true"
+                      style={{ opacity: typedLength < fullText.length ? 1 : 0 }}
+                    />
+                  </p>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
